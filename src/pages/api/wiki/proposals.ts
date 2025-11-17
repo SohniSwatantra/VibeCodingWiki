@@ -27,7 +27,7 @@ export const OPTIONS: APIRoute = async () => {
   });
 };
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   const slug = url.searchParams.get('slug');
   if (!slug) {
     return new Response(JSON.stringify({ message: 'Missing slug parameter' }), {
@@ -35,9 +35,24 @@ export const GET: APIRoute = async ({ url }) => {
     });
   }
 
-  const entry = await runConvexQuery<any>('pages:getPageBySlug', { slug });
+  // Try to get or create the page from fallback data if it doesn't exist
+  let entry = await runConvexQuery<any>('pages:getPageBySlug', { slug });
+
+  // If page doesn't exist in Convex, try to create it from fallback data
+  if (!entry?.page && locals.user) {
+    const convexUser = await getConvexUserByWorkOSId(locals.user.id);
+    if (convexUser) {
+      const actingIdentity = buildActingIdentity(locals.user, convexUser);
+      entry = await ensurePageForSlug(slug, actingIdentity);
+    }
+  }
+
   if (!entry?.page) {
-    return new Response(JSON.stringify({ proposals: [] }), {
+    return new Response(JSON.stringify({
+      pageId: null,
+      proposals: [],
+      approvedContent: ''
+    }), {
       status: 200,
     });
   }
