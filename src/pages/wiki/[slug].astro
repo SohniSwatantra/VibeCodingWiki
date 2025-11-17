@@ -2,11 +2,12 @@
 export const prerender = false;
 
 import AppLayout from '../../layouts/AppLayout.astro';
-import { fetchDirectory, fetchPageBySlug } from '../../lib/wiki/convexHelpers';
+import { fetchDirectory, fetchPageBySlug, getConvexUserByWorkOSId } from '../../lib/wiki/convexHelpers';
 import { RevisionHistory } from '../../components/wiki/RevisionHistory.tsx';
 import { EditingCallout } from '../../components/wiki/EditingCallout.tsx';
 import { EditProposalForm } from '../../components/wiki/EditProposalForm.tsx';
 import { ModerationPanel } from '../../components/wiki/ModerationPanel.tsx';
+import { runConvexQuery } from '../../lib/convex.server';
 
 export async function getStaticPaths() {
   const { articles } = await fetchDirectory();
@@ -17,6 +18,17 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const isAuthenticated = Boolean(Astro.locals.user);
+
+// Check if user has moderator or super_admin role
+let canModerate = false;
+if (Astro.locals.user) {
+  const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+  if (convexUser) {
+    const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+    const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+    canModerate = roleNames.includes('moderator') || roleNames.includes('super_admin');
+  }
+}
 
 const pageResult = await fetchPageBySlug(slug ?? '');
 const articleData = pageResult.article;
@@ -91,7 +103,7 @@ const formatSectionId = (heading: string) =>
 
       <EditingCallout articleTitle={articleData.title} />
       <EditProposalForm client:load articleSlug={articleData.slug} isAuthenticated={isAuthenticated} />
-      <ModerationPanel client:load articleSlug={articleData.slug} canModerate={isAuthenticated} />
+      <ModerationPanel client:load articleSlug={articleData.slug} canModerate={canModerate} />
       <RevisionHistory articleSlug={articleData.slug} />
     </div>
 

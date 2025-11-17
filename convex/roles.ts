@@ -1,3 +1,5 @@
+import { query } from './kit';
+import { v } from 'convex/values';
 import { requireUser } from './auth';
 
 export const ROLES = {
@@ -26,4 +28,14 @@ export async function requireRole(ctx: any, allowed: RoleName[] = [ROLES.reader]
 
   return { viewer, roleNames };
 }
+
+export const getUserRoles = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx: any, args: { userId: string }) => {
+    return await ctx.db
+      .query('roles')
+      .withIndex('by_userId', (q: any) => q.eq('userId', args.userId))
+      .collect();
+  },
+});
 

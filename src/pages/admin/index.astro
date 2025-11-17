@@ -1,0 +1,207 @@
+---
+export const prerender = false;
+
+import AppLayout from '../../layouts/AppLayout.astro';
+import { getConvexUserByWorkOSId } from '../../lib/wiki/convexHelpers';
+import { runConvexQuery } from '../../lib/convex.server';
+
+// Check authentication and role
+if (!Astro.locals.user) {
+  return Astro.redirect('/login');
+}
+
+const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+if (!convexUser) {
+  return new Response('User profile not found', { status: 403 });
+}
+
+const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+const isSuperAdmin = roleNames.includes('super_admin');
+
+if (!isSuperAdmin) {
+  return new Response('Access denied. Super admin role required.', { status: 403 });
+}
+
+// Fetch all pages grouped by status
+const allPages = await runConvexQuery<any[]>('pages:listPages', { limit: 1000 });
+
+// Group pages by status
+const pagesByStatus = {
+  draft: [] as any[],
+  pending: [] as any[],
+  published: [] as any[],
+  archived: [] as any[],
+};
+
+for (const entry of allPages || []) {
+  const status = entry.page?.status || 'unknown';
+  if (status in pagesByStatus) {
+    pagesByStatus[status as keyof typeof pagesByStatus].push(entry.page);
+  }
+}
+
+const stats = {
+  total: allPages?.length || 0,
+  draft: pagesByStatus.draft.length,
+  pending: pagesByStatus.pending.length,
+  published: pagesByStatus.published.length,
+  archived: pagesByStatus.archived.length,
+};
+---
+
+<AppLayout title="Admin Dashboard" description="Administration panel for VibeCodingWiki">
+  <div class="space-y-6">
+    <header class="border-b border-[#a2a9b1] pb-4">
+      <h1 class="text-[2rem] font-normal text-[#202122]">Admin Dashboard</h1>
+      <p class="text-sm text-[#54595d]">Manage pages, users, and system settings</p>
+    </header>
+
+    <!-- Stats Overview -->
+    <section class="grid gap-4 md:grid-cols-4">
+      <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.3em] text-[#72777d]">Total Pages</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#202122]">{stats.total}</p>
+      </div>
+      <div class="rounded border border-[#c8ccd1] bg-[#e8f4e8] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.3em] text-[#72777d]">Published</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#008000]">{stats.published}</p>
+      </div>
+      <div class="rounded border border-[#c8ccd1] bg-[#fef6e7] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.3em] text-[#72777d]">Pending</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#f4a500]">{stats.pending}</p>
+      </div>
+      <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.3em] text-[#72777d]">Draft</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#54595d]">{stats.draft}</p>
+      </div>
+    </section>
+
+    <!-- Admin Actions -->
+    <section class="rounded border border-[#c8ccd1] bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-semibold text-[#202122]">Admin Actions</h2>
+      <div class="mt-4 space-y-4">
+        <div class="flex items-center justify-between rounded border border-[#a2a9b1] bg-[#f8f9fa] p-4">
+          <div>
+            <h3 class="font-semibold text-[#202122]">Fix Pending Pages</h3>
+            <p class="text-sm text-[#54595d]">
+              Restore pages that were incorrectly set to 'pending' status back to 'published'
+            </p>
+            {stats.pending > 0 && (
+              <p class="mt-1 text-xs text-[#f4a500]">
+                ⚠️ Found {stats.pending} page{stats.pending === 1 ? '' : 's'} with pending status
+              </p>
+            )}
+          </div>
+          <button
+            id="fix-pending-btn"
+            class="rounded border border-[#a2a9b1] bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#0b0080]"
+          >
+            Run Fix
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pages by Status -->
+    {Object.entries(pagesByStatus).map(([status, pages]) =>
+      pages.length > 0 && (
+        <section class="rounded border border-[#c8ccd1] bg-white p-6 shadow-sm">
+          <h2 class="text-xl font-semibold capitalize text-[#202122]">{status} Pages ({pages.length})</h2>
+          <div class="mt-4 space-y-2">
+            {pages.slice(0, 10).map((page: any) => (
+              <div class="flex items-center justify-between rounded border border-[#a2a9b1] bg-[#f8f9fa] p-3">
+                <div class="flex-1">
+                  <h3 class="font-semibold text-[#202122]">
+                    <a class="text-[#0645ad] hover:underline" href={`/wiki/${page.slug}`}>
+                      {page.title}
+                    </a>
+                  </h3>
+                  <p class="text-xs text-[#72777d]">
+                    Slug: {page.slug} · Created: {new Date(page.createdAt).toLocaleDateString()}
+                    {page.approvedRevisionId && ' · Has approved revision'}
+                  </p>
+                </div>
+                <span class={`rounded px-2 py-1 text-xs font-semibold ${
+                  status === 'published' ? 'bg-[#e8f4e8] text-[#008000]' :
+                  status === 'pending' ? 'bg-[#fef6e7] text-[#f4a500]' :
+                  'bg-[#e8e8e8] text-[#54595d]'
+                }`}>
+                  {status}
+                </span>
+              </div>
+            ))}
+            {pages.length > 10 && (
+              <p class="text-sm text-[#72777d]">
+                Showing 10 of {pages.length} pages
+              </p>
+            )}
+          </div>
+        </section>
+      )
+    )}
+
+    <!-- Result Message -->
+    <div id="result-message" class="hidden rounded border p-4"></div>
+  </div>
+
+  <script>
+    const fixBtn = document.getElementById('fix-pending-btn');
+    const resultMessage = document.getElementById('result-message');
+
+    fixBtn?.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to run the fix? This will restore all pending pages with approved revisions to published status.')) {
+        return;
+      }
+
+      fixBtn.disabled = true;
+      fixBtn.textContent = 'Running...';
+
+      try {
+        const response = await fetch('/api/fix-pending-pages');
+        const data = await response.json();
+
+        if (resultMessage) {
+          resultMessage.classList.remove('hidden');
+
+          if (data.success) {
+            resultMessage.className = 'rounded border border-[#008000] bg-[#e8f4e8] p-4 text-[#008000]';
+            resultMessage.innerHTML = `
+              <h3 class="font-semibold">✅ Fix completed successfully!</h3>
+              <p class="mt-2 text-sm">
+                Total pages processed: ${data.total}<br>
+                Fixed: ${data.fixed}<br>
+                Skipped: ${data.skipped}
+              </p>
+              <p class="mt-2 text-xs">Refresh the page to see updated stats.</p>
+            `;
+          } else {
+            resultMessage.className = 'rounded border border-[#d33f3f] bg-[#fee] p-4 text-[#d33f3f]';
+            resultMessage.innerHTML = `
+              <h3 class="font-semibold">❌ Fix failed</h3>
+              <p class="mt-2 text-sm">${data.message}</p>
+            `;
+          }
+        }
+
+        // Re-enable button after a delay
+        setTimeout(() => {
+          fixBtn.disabled = false;
+          fixBtn.textContent = 'Run Fix';
+        }, 3000);
+      } catch (error) {
+        if (resultMessage) {
+          resultMessage.classList.remove('hidden');
+          resultMessage.className = 'rounded border border-[#d33f3f] bg-[#fee] p-4 text-[#d33f3f]';
+          resultMessage.innerHTML = `
+            <h3 class="font-semibold">❌ Error</h3>
+            <p class="mt-2 text-sm">${error instanceof Error ? error.message : 'Unknown error'}</p>
+          `;
+        }
+
+        fixBtn.disabled = false;
+        fixBtn.textContent = 'Run Fix';
+      }
+    });
+  </script>
+</AppLayout>
