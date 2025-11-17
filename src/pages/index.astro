@@ -1,6 +1,5 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro';
-import { LaunchChecklist } from '../components/app/LaunchChecklist.tsx';
 import { fetchDirectory } from '../lib/wiki/convexHelpers';
 
 const structuredSections = [
@@ -127,19 +126,6 @@ const featuredArticles = featuredCollection.slice(0, 3);
     ))}
   </section>
 
-  <!-- Timeline outlines how the stack fits together for the learner -->
-  <section class="mt-6 rounded border border-[#a2a9b1] bg-[#f8f9fa] p-5 shadow-sm">
-    <h3 class="mb-3 text-lg font-semibold text-[#202122]">Launch checklist</h3>
-    <ol class="list-decimal space-y-2 pl-5 text-sm text-[#202122]">
-      <li>Prototype flows in Bolt.new, then export React islands into Astro.</li>
-      <li>Model wiki data structures and scheduled jobs with Convex functions.</li>
-      <li>Wire WorkOS authentication and map sessions to Convex user profiles.</li>
-      <li>Gate features and record usage using Autumn product plans.</li>
-      <li>Ingest external knowledge with Firecrawl-managed pipelines.</li>
-      <li>Deploy to Netlify and manage DNS via Cloudflare.</li>
-    </ol>
-  </section>
-
   <section class="mt-6 rounded border border-[#a2a9b1] bg-white p-5 shadow-sm">
     <h3 class="mb-3 text-lg font-semibold text-[#202122]">Featured articles</h3>
     <div class="grid gap-4 md:grid-cols-3">
@@ -156,7 +142,4 @@ const featuredArticles = featuredCollection.slice(0, 3);
       ))}
     </div>
   </section>
-
-  <!-- React island demonstrates interactive UI running alongside Astro content -->
-  <LaunchChecklist client:load />
 </AppLayout>
