@@ -9,7 +9,8 @@
     "astro": "astro",
     "firecrawl:fetch": "node scripts/firecrawl-fetch.js",
     "firecrawl:images": "node scripts/firecrawl-images.js",
-    "seed:convex": "tsx scripts/seed-convex.ts"
+    "seed:convex": "tsx scripts/seed-convex.ts",
+    "migrate:pages": "tsx scripts/migrate-fallback-pages.ts"
   },
   "dependencies": {
     "@astrojs/netlify": "^6.3.2",
