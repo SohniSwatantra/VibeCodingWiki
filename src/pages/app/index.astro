@@ -1,0 +1,22 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+
+const pageTitle = 'VibeCoding Wiki App';
+const pageDescription = 'Authenticated workspace for editors and vibecoders.';
+---
+
+<AppLayout title={pageTitle} description={pageDescription}>
+  <section class="flex flex-col gap-6 rounded-3xl border border-slate-800 bg-slate-900/40 p-10">
+    <h2 class="text-3xl font-semibold text-emerald-300">App Shell Placeholder</h2>
+    <p class="max-w-2xl text-sm text-slate-300">
+      This route will host the authenticated wiki experience. We will mount the React-powered dashboard here,
+      connect it to Convex for data, protect the page with WorkOS authentication, and gate features with Autumn usage checks.
+    </p>
+    <ul class="space-y-3 text-sm text-slate-200">
+      <li>• Replace this section with the TanStack Router-powered app shell.</li>
+      <li>• Add providers for Query, Router, feature flags, and user sessions.</li>
+      <li>• Render editor, discussion, analytics, and billing panels inside this layout.</li>
+    </ul>
+  </section>
+</AppLayout>
+

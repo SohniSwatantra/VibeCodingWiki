@@ -1,0 +1,35 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import { getAllUsers } from '../../data/users.ts';
+import { RoleBadge } from '../../components/wiki/RoleBadge.tsx';
+
+const users = getAllUsers();
+---
+
+<AppLayout title="Community members" description="Meet the Vibecodingwiki contributors and moderators.">
+  <section class="rounded border border-[#a2a9b1] bg-white p-5 shadow-sm">
+    <h1 class="text-[1.75rem] font-normal text-[#202122]">Contributors</h1>
+    <p class="mt-2 text-sm text-[#54595d]">
+      These are the people shaping the VibeCoding canon. Reputation grows with accepted edits, mentorship, and Talk page stewardship.
+    </p>
+  </section>
+
+  <section class="mt-4 grid gap-4 md:grid-cols-3">
+    {users.map((user) => (
+      <article class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 shadow-sm">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold text-[#202122]">
+              <a class="text-[#0645ad]" href={`/users/${user.username}`}>{user.displayName}</a>
+            </h2>
+            <RoleBadge role={user.role} />
+          </div>
+          <p class="text-xs text-[#72777d]">Joined {new Date(user.joinedAt).toLocaleDateString()}</p>
+          <p class="text-sm text-[#202122]">{user.bio}</p>
+          <p class="text-xs text-[#54595d]">Reputation: {user.reputation}</p>
+        </div>
+      </article>
+    ))}
+  </section>
+</AppLayout>
+

@@ -1,0 +1,36 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import { fetchDirectory, fetchPageBySlug } from '../../../lib/wiki/convexHelpers';
+import { TalkBoard } from '../../../components/wiki/TalkBoard.tsx';
+
+const { slug } = Astro.params;
+const articleResult = await fetchPageBySlug(slug ?? '');
+const article = articleResult.article;
+
+const canParticipate = Boolean(Astro.locals.user);
+
+if (!article) {
+  return new Response('Article not found', {
+    status: 404,
+  });
+}
+
+export async function getStaticPaths() {
+  const { articles } = await fetchDirectory();
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+  }));
+}
+---
+
+<AppLayout title={`${article.title} — Talk`} description={`Discussion threads for improving ${article.title}`}>
+  <section class="rounded border border-[#a2a9b1] bg-white p-5 shadow-sm">
+    <h1 class="text-[1.75rem] font-normal text-[#202122]">Talk:{article.title}</h1>
+    <p class="mt-2 text-sm text-[#54595d]">
+      Use this space to coordinate improvements, request additional sources, or brainstorm new sections for the article.
+    </p>
+  </section>
+
+  <TalkBoard client:load articleSlug={article.slug} canParticipate={canParticipate} />
+</AppLayout>
+

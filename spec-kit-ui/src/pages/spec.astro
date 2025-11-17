@@ -1,0 +1,14 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { MarkdownEditor } from '../components/MarkdownEditor.tsx';
+import { readDocument } from '../lib/files';
+
+const content = await readDocument('spec');
+---
+
+<BaseLayout title="Specification" description="View and update the VibeCodingWiki specification.">
+  <MarkdownEditor client:load initialContent={content} endpoint="/api/spec" documentName="Feature Specification" />
+</BaseLayout>
+

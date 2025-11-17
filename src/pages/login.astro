@@ -1,0 +1,58 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import { EmailMagicAuth } from '../components/app/EmailMagicAuth.tsx';
+
+const user = Astro.locals.user;
+const baseDescription = 'Sign in to Vibecodingwiki using Google, GitHub, or a one-time email code.';
+---
+
+<AppLayout title="Sign in" description={baseDescription}>
+  <section class="rounded border border-[#a2a9b1] bg-white p-5 shadow-sm">
+    <h1 class="text-[1.75rem] font-normal text-[#202122]">Sign in</h1>
+    <p class="mt-2 text-sm text-[#54595d]">
+      Use your preferred identity provider. Accounts are provisioned through WorkOS so teams can connect SSO providers later without
+      changing the wiki.
+    </p>
+  </section>
+
+  {user ? (
+    <section class="mt-4 rounded border border-[#a2a9b1] bg-[#f8f9fa] p-5 shadow-sm">
+      <p class="text-sm text-[#202122]">
+        You are already signed in as <strong>{user.email ?? user.firstName ?? 'a vibecoder'}</strong>.
+      </p>
+      <p class="mt-2 text-xs text-[#54595d]">
+        Need to switch accounts? <a class="text-[#0645ad]" href="/api/auth/workos/logout">Log out</a> first.
+      </p>
+    </section>
+  ) : (
+    <section class="mt-4 grid gap-4 md:grid-cols-2">
+      <div class="space-y-3 rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 shadow-sm">
+        <h3 class="text-base font-semibold text-[#202122]">Single sign-on</h3>
+        <p class="text-sm text-[#54595d]">
+          Authenticate with your preferred OAuth provider. We support Google and GitHub out of the box.
+        </p>
+        <div class="flex flex-col gap-2">
+          <a
+            class="inline-flex items-center justify-center rounded border border-[#3366cc] bg-[#3366cc] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#254a99]"
+            href="/api/auth/workos/login?provider=google"
+          >
+            Continue with Google
+          </a>
+          <a
+            class="inline-flex items-center justify-center rounded border border-[#24292f] bg-[#24292f] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-black"
+            href="/api/auth/workos/login?provider=github"
+          >
+            Continue with GitHub
+          </a>
+        </div>
+        <p class="text-xs text-[#72777d]">
+          By continuing you agree to the wiki community guidelines and allow us to store your profile for moderation purposes.
+        </p>
+      </div>
+
+      <EmailMagicAuth client:load />
+    </section>
+  )}
+</AppLayout>
+
+

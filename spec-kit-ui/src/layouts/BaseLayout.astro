@@ -1,0 +1,73 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Spec Kit Console',
+  description = 'Review and edit VibeCodingWiki specifications.',
+} = Astro.props as Props;
+
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { href: '/spec', label: 'Specification' },
+  { href: '/plan', label: 'Implementation Plan' },
+];
+---
+
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen antialiased">
+    <div class="mx-auto w-full max-w-6xl px-4 py-6">
+      <div class="overflow-hidden rounded border border-[#a2a9b1] bg-white shadow-sm">
+        <header class="border-b border-[#a2a9b1] bg-[#f8f9fa] px-6 py-5">
+          <div class="space-y-3">
+            <div class="space-y-1">
+              <p class="text-xs uppercase tracking-[0.4em] text-[#72777d]">Vibecodingwiki</p>
+              <h1 class="text-[2rem] font-normal leading-tight text-[#202122]">{title}</h1>
+              <p class="max-w-2xl text-sm text-[#54595d]">{description}</p>
+            </div>
+            <nav class="flex flex-wrap items-center gap-2 text-sm text-[#0645ad]">
+              {navItems.map((item) => {
+                const isActive = currentPath === item.href;
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    class={[
+                      'rounded border px-3 py-1 text-[#0645ad] shadow-sm hover:text-[#0b0080]',
+                      isActive ? 'border-[#3366cc] bg-[#eaf1fb] font-semibold' : 'border-[#a2a9b1] bg-white',
+                    ].join(' ')}
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </header>
+
+        <main class="px-6 py-6">
+          <slot />
+        </main>
+
+        <footer class="border-t border-[#a2a9b1] bg-[#f8f9fa] px-6 py-4 text-xs text-[#54595d] md:flex md:items-center md:justify-between">
+          <p>Spec Kit Console · Styled after VibeCodingWiki · Powered by Astro & React.</p>
+          <p>© {new Date().getFullYear()} VibeCodingWiki</p>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
+

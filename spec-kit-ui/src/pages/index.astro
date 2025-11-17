@@ -1,0 +1,24 @@
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Spec Kit Console" description="Review and edit the live specification documents.">
+  <section class="space-y-6">
+    <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] px-6 py-10 text-center shadow-sm">
+      <p class="text-sm uppercase tracking-[0.3em] text-[#72777d]">Quick access</p>
+      <h2 class="mt-2 text-[1.75rem] font-normal text-[#202122]">What would you like to edit?</h2>
+      <div class="mt-6 flex flex-wrap justify-center gap-4">
+        <a href="/spec" class="rounded border border-[#3366cc] bg-[#3366cc] px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-[#254a99]">
+          Specification
+        </a>
+        <a href="/plan" class="rounded border border-[#a2a9b1] bg-white px-5 py-3 text-base font-semibold text-[#0645ad] shadow-sm hover:text-[#0b0080]">
+          Implementation Plan
+        </a>
+      </div>
+      <p class="mt-4 text-sm text-[#54595d]">
+        All edits are saved directly to
+        <code class="ml-1 rounded bg-white px-1 py-0.5 text-xs text-[#0645ad]">spec-kit/001-vibecodingwiki/</code>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
