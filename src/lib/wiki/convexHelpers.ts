@@ -145,8 +145,8 @@ export async function fetchPageBySlug(slug: string): Promise<PageFetchResult> {
 }
 
 export async function fetchDirectory(options: { status?: string; limit?: number } = {}): Promise<DirectoryResult> {
-  const { status = 'published', limit = 200 } = options;
-  const response = (await runConvexQuery<ConvexPageEntry[]>('pages:listPages', { status, limit })) ?? [];
+  const { limit = 200 } = options;
+  const response = (await runConvexQuery<ConvexPageEntry[]>('pages:listPages', { limit })) ?? [];
 
   if (response.length > 0) {
     return {
