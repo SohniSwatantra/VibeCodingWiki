@@ -45,10 +45,15 @@ type ModerationPayload = {
   approvedContent: string; // Current approved content for diff comparison
 };
 
-function ModerationPanelContent({ articleSlug, canModerate = true }: ModerationPanelProps) {
+function ModerationPanelContent({ articleSlug, canModerate = false }: ModerationPanelProps) {
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Don't render moderation panel at all if user can't moderate
+  if (!canModerate) {
+    return null;
+  }
 
   const mapEntry = (entry: any): ModerationEntry => ({
     id: entry.id,
