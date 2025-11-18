@@ -1,9 +1,6 @@
 ---
 import AppLayout from '../../layouts/AppLayout.astro';
-import { getAllUsers } from '../../data/users.ts';
-import { RoleBadge } from '../../components/wiki/RoleBadge.tsx';
-
-const users = getAllUsers();
+import { ContributorsList } from '../../components/app/ContributorsList.tsx';
 ---
 
 <AppLayout title="Community members" description="Meet the Vibecodingwiki contributors and moderators.">
@@ -14,22 +11,8 @@ const users = getAllUsers();
     </p>
   </section>
 
-  <section class="mt-4 grid gap-4 md:grid-cols-3">
-    {users.map((user) => (
-      <article class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 shadow-sm">
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <h2 class="text-base font-semibold text-[#202122]">
-              <a class="text-[#0645ad]" href={`/users/${user.username}`}>{user.displayName}</a>
-            </h2>
-            <RoleBadge role={user.role} />
-          </div>
-          <p class="text-xs text-[#72777d]">Joined {new Date(user.joinedAt).toLocaleDateString()}</p>
-          <p class="text-sm text-[#202122]">{user.bio}</p>
-          <p class="text-xs text-[#54595d]">Reputation: {user.reputation}</p>
-        </div>
-      </article>
-    ))}
-  </section>
+  <div class="mt-4">
+    <ContributorsList client:load />
+  </div>
 </AppLayout>
 

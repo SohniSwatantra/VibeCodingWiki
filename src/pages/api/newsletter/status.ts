@@ -1,0 +1,38 @@
+import type { APIRoute } from 'astro';
+import { runConvexQuery } from '../../../lib/convex.server';
+import { getConvexUserByWorkOSId, buildActingIdentity } from '../../../lib/wiki/convexHelpers';
+
+export const GET: APIRoute = async ({ locals }) => {
+  try {
+    const workosUser = locals.user;
+    if (!workosUser) {
+      return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
+    }
+
+    const convexUser = await getConvexUserByWorkOSId(workosUser.id);
+    if (!convexUser) {
+      return new Response(
+        JSON.stringify({ message: 'User profile not found in Convex.' }),
+        { status: 403 }
+      );
+    }
+
+    const actingIdentity = buildActingIdentity(workosUser, convexUser);
+    const result = await runConvexQuery<any>(
+      'newsletters:getSubscriptionStatus',
+      {},
+      { actingAs: actingIdentity }
+    );
+
+    return new Response(
+      JSON.stringify(result),
+      { status: 200 }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get subscription status.';
+    return new Response(
+      JSON.stringify({ message: errorMessage }),
+      { status: 500 }
+    );
+  }
+};

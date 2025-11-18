@@ -250,5 +250,44 @@ export default defineSchema({
     .index('by_mediaId', ['mediaId'])
     .index('by_page_role', ['pageId', 'role'])
     .index('by_addedBy', ['addedBy']),
+
+  apps: defineTable({
+    name: v.string(),
+    category: v.string(), // Games, Tech, Health, Travel, Habits, Productivity, Others
+    categoryOther: v.optional(v.string()), // If category is "Others"
+    description: v.string(),
+    builtIn: v.string(), // Lovable, Bolt, V0, Replit, Cursor, CoPilot, VScode, Claude Code, Vibe Code APP, Vibingbase, Others
+    builtInOther: v.optional(v.string()), // If builtIn is "Others"
+    submittedBy: v.id('users'),
+    submittedAt: v.number(),
+    status: v.union(v.literal('pending'), v.literal('approved'), v.literal('rejected')),
+    approvedBy: v.optional(v.id('users')),
+    approvedAt: v.optional(v.number()),
+  })
+    .index('by_category', ['category'])
+    .index('by_status', ['status'])
+    .index('by_submittedBy', ['submittedBy']),
+
+  newsletterSubscribers: defineTable({
+    userId: v.id('users'),
+    email: v.string(),
+    subscribedAt: v.number(),
+    status: v.union(v.literal('active'), v.literal('unsubscribed')),
+    unsubscribedAt: v.optional(v.number()),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_email', ['email'])
+    .index('by_status', ['status']),
+
+  sponsors: defineTable({
+    name: v.string(),
+    thankyouNote: v.string(),
+    logoUrl: v.optional(v.string()),
+    websiteUrl: v.optional(v.string()),
+    displayOrder: v.number(),
+    createdAt: v.number(),
+    createdBy: v.optional(v.id('users')),
+  })
+    .index('by_displayOrder', ['displayOrder']),
 });
 

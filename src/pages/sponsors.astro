@@ -1,0 +1,52 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import { SponsorsList } from '../components/app/SponsorsList.tsx';
+---
+
+<AppLayout
+  title="Sponsors"
+  description="Support VibeCodingWiki and join our community of sponsors"
+>
+  <div class="mx-auto max-w-5xl space-y-8">
+    <!-- Sponsors List -->
+    <section class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+      <h2 class="mb-4 text-2xl font-semibold text-[#202122]">Our Sponsors</h2>
+      <p class="mb-6 text-sm text-[#54595d]">
+        Thank you to our amazing sponsors who support VibeCodingWiki! Your contributions help us maintain and grow this community resource.
+      </p>
+
+      <SponsorsList client:load />
+    </section>
+
+    <!-- Become a Sponsor -->
+    <section class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+      <h2 class="mb-4 text-2xl font-semibold text-[#202122]">Become a Sponsor</h2>
+      <p class="mb-6 text-sm text-[#54595d]">
+        Support VibeCodingWiki and help us continue to provide valuable resources to the VibeCoding community. As a sponsor, you'll be featured on this page with a thank you note.
+      </p>
+
+      <!-- Placeholder for RapidForms embed -->
+      <div id="sponsor-form" class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-6">
+        <p class="mb-4 text-sm text-[#202122]">
+          Ready to sponsor? Fill out the form below:
+        </p>
+
+        <!-- TODO: Replace this placeholder with the actual RapidForms embed code -->
+        <div class="rounded border-2 border-dashed border-[#a2a9b1] bg-white p-8 text-center">
+          <p class="text-sm text-[#72777d]">
+            RapidForms Sponsor Form will be embedded here
+          </p>
+          <p class="mt-2 text-xs text-[#72777d]">
+            (Embed code to be provided)
+          </p>
+        </div>
+
+        <!-- Instructions for embedding RapidForms:
+             1. Get your RapidForms embed code
+             2. Replace the placeholder div above with the embed script
+             3. The form should include fields for sponsor name, contact info, and payment
+        -->
+      </div>
+    </section>
+  </div>
+</AppLayout>

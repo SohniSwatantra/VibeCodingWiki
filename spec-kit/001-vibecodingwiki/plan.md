@@ -117,10 +117,82 @@ The wiki now uses an intelligent diff-based editing system instead of full conte
 - **Risk 4**: Missing Sentry tokens leading to failed builds.  
   - Mitigation: Make DSN optional, guard uploads behind env checks, document fallback instructions.
 
+## Additional Implementation Steps
+
+### 6. **Community Features - Apps, Newsletter, Sponsors**
+   - Description: Implement app submission form (`/submit-app`), newsletter subscription (`/newsletter`), sponsors page (`/sponsors`), and about creator page (`/about`).
+   - Owner: Full-stack engineer.
+   - Dependencies: Convex schema for apps/newsletters/sponsors, RapidForms embed code for sponsors.
+
+**App Submission Flow:**
+1. User visits `/submit-app` (authentication required)
+2. Fills form with: name, category (Games/Tech/Health/Travel/Habits/Productivity/Others + custom), description, built-in tool (Lovable/Bolt/V0/Replit/Cursor/CoPilot/VScode/Claude Code/Vibe Code APP/Vibingbase/Others + custom)
+3. Form submits to `/api/apps/submit` → creates app with status='pending'
+4. Moderators can approve/reject apps via admin interface (future enhancement)
+5. Approved apps appear in apps gallery (future enhancement)
+
+**Newsletter Flow:**
+1. User visits `/newsletter` (authentication required)
+2. Clicks "Sign me up for newsletter" button
+3. System checks if already subscribed
+4. Creates/reactivates subscription with status='active'
+5. Displays confirmation message
+
+**Sponsors Flow:**
+1. Any visitor can view `/sponsors` page
+2. Page displays list of sponsors ordered by displayOrder
+3. Each sponsor shows: name, thank you note, optional logo, optional website link
+4. RapidForms payment form embedded for new sponsorships (no auth required)
+5. Admin can manually add/update sponsors via Convex dashboard
+
+**About Creator Flow:**
+1. Any visitor can view `/about` page
+2. Page displays:
+   - Profile image (upload functionality placeholder)
+   - Bio: AI Generalist, Founder VibeCodeFixers, r/MCPservers
+   - Twitter: @TheGeneralistHQ
+   - Key Achievements: VibeCodeFixers (550 experts), r/MCPservers (15K devs)
+   - Communities: r/MCPservers (14k+ devs), r/JulesAgent (3k+ devs), r/AgentExperience (upcoming)
+   - Focus Areas: AI Agents, MCP, Content, SEO, Automation
+
+### 7. **Real Contributors Page**
+   - Description: Update `/users` page to fetch real contributors from Convex instead of fake data.
+   - Owner: Frontend engineer.
+   - Dependencies: Convex `users:listContributors` query.
+
+**Contributors Display:**
+- Shows real users from Convex database
+- Displays: displayName, email, join date, bio, reputation, contribution count
+- Shows role badge (super_admin, moderator, contributor, reader)
+- Ordered by most recent join date
+
+## Data Schema Updates
+
+### New Tables
+- **apps**: Stores submitted vibe-coded applications
+  - Fields: name, category, categoryOther, description, builtIn, builtInOther, submittedBy, submittedAt, status, approvedBy, approvedAt
+  - Indexes: by_category, by_status, by_submittedBy
+
+- **newsletterSubscribers**: Tracks newsletter subscriptions
+  - Fields: userId, email, subscribedAt, status, unsubscribedAt
+  - Indexes: by_userId, by_email, by_status
+
+- **sponsors**: Manages sponsor listings
+  - Fields: name, thankyouNote, logoUrl, websiteUrl, displayOrder, createdAt, createdBy
+  - Indexes: by_displayOrder
+
+### Updated Navigation
+- Removed: Discover, Recent changes, Community portal, Documentation
+- Kept: Main page, All pages, Contributors
+- Updated: "Vibe app" → "VibeCodingWiki App"
+- Added: Submit an APP, VibeCoding Newsletter, Sponsors, About Creator
+
 ## Open Questions
 - Will we migrate legacy useautumn.com data into Convex? (TBD)
 - Should AI draft endpoint be rate-limited per user? (Future enhancement)
 - What governance process will moderators follow for approving AI-generated content? (Needs policy)
+- How will submitted apps be displayed in a gallery view? (Future enhancement)
+- Should app submissions be auto-approved or require moderation? (Currently requires moderation)
 
 
 

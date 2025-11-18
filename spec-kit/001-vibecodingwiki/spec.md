@@ -101,5 +101,91 @@ Contributors use Talk pages to start threads, reply, and coordinate improvements
 - **Risk**: WorkOS session misconfiguration. *Mitigation*: Validate redirect URIs in WorkOS admin and add integration tests.
 - **Risk**: Manual reviews miss subtle regressions. *Mitigation*: Require passing CodeRabbit status checks and capture fixes in `Bugs.md`.
 
+---
+
+### User Story 4 - Submit and discover apps (Priority: P2)
+
+Contributors can submit vibe-coded applications through a form; approved apps are displayed in a community gallery.
+
+**Why this priority**: Showcasing community-built applications drives engagement and demonstrates VibeCoding value.
+
+**Independent Test**: Log in, visit `/submit-app`, fill form with app details, submit; verify app enters pending queue for approval.
+
+**Acceptance Scenarios**:
+
+1. **Given** a contributor, **When** they submit an app with name, category, description, and build tool, **Then** the app is created with status='pending'.
+2. **Given** a moderator, **When** they approve a pending app, **Then** the app appears in the apps gallery.
+
+---
+
+### User Story 5 - Subscribe to newsletter (Priority: P3)
+
+Authenticated users can subscribe to the VibeCoding Newsletter to receive updates and community highlights.
+
+**Why this priority**: Building an engaged email list supports community growth and retention.
+
+**Independent Test**: Log in, visit `/newsletter`, click subscribe button; verify subscription is active.
+
+**Acceptance Scenarios**:
+
+1. **Given** an authenticated user, **When** they click "Sign me up for newsletter", **Then** their subscription is created with status='active'.
+2. **Given** a user already subscribed, **When** they visit `/newsletter`, **Then** they see confirmation of their existing subscription.
+
+---
+
+### User Story 6 - View and become a sponsor (Priority: P3)
+
+Visitors can view current sponsors and submit sponsorship through an embedded payment form.
+
+**Why this priority**: Sponsorships provide sustainable funding and community recognition.
+
+**Independent Test**: Visit `/sponsors`, view sponsor list, access embedded RapidForms payment form.
+
+**Acceptance Scenarios**:
+
+1. **Given** a visitor, **When** they visit `/sponsors`, **Then** they see a list of current sponsors with thank you notes.
+2. **Given** a potential sponsor, **When** they complete the embedded form, **Then** their sponsorship is processed and they're added to the list.
+
+---
+
+### User Story 7 - Learn about the creator (Priority: P4)
+
+Visitors can view information about the VibeCodingWiki creator, including bio, achievements, and community links.
+
+**Why this priority**: Transparency and personal connection build trust and community engagement.
+
+**Independent Test**: Visit `/about`, view creator profile with Twitter info and community links.
+
+**Acceptance Scenarios**:
+
+1. **Given** a visitor, **When** they visit `/about`, **Then** they see creator bio, achievements, and links to r/MCPservers, r/JulesAgent, and r/AgentExperience.
+
+---
+
+## Additional Functional Requirements
+
+- **FR-012**: System MUST allow authenticated users to submit apps via `/submit-app` with fields: name, category, description, built-in tool.
+- **FR-013**: Apps MUST support categories: Games, Tech, Health, Travel, Habits, Productivity, Others (with open field).
+- **FR-014**: Apps MUST support build tools: Lovable, Bolt, V0, Replit, Cursor, CoPilot, VScode, Claude Code, Vibe Code APP, Vibingbase, Others (with open field).
+- **FR-015**: Newsletter subscription MUST be available to authenticated users via `/newsletter`.
+- **FR-016**: Newsletter subscriptions MUST track status (active/unsubscribed) and subscription date.
+- **FR-017**: Sponsors page MUST display sponsor list ordered by displayOrder with name, thank you note, logo, and website link.
+- **FR-018**: Sponsors page MUST embed RapidForms payment form for new sponsorships (no authentication required).
+- **FR-019**: About Creator page MUST display bio, achievements, community links, and profile image.
+- **FR-020**: Contributors page MUST show real users from Convex with display name, join date, bio, reputation, and contribution count.
+
+## Additional Key Entities
+
+- **App**: Submitted vibe-coded application (name, category, description, builtIn, submittedBy, status).
+- **NewsletterSubscriber**: User subscription to newsletter (userId, email, status, subscribedAt).
+- **Sponsor**: Sponsor record (name, thankyouNote, logoUrl, websiteUrl, displayOrder).
+
+## Additional Success Criteria
+
+- **SC-007**: App submission form successfully creates pending apps; moderators can approve/reject via admin interface.
+- **SC-008**: Newsletter subscription toggles work seamlessly; subscription status persists across sessions.
+- **SC-009**: Sponsors page loads sponsor list in under 2s; RapidForms embed loads within 3s.
+- **SC-010**: Contributors page displays real user data from Convex with accurate role badges and stats.
+
 
 

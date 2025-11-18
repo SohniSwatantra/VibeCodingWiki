@@ -165,3 +165,47 @@ export const getPublicProfiles = query({
   },
 });
 
+export const listContributors = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: any, args: { limit?: number }) => {
+    const limit = args.limit ?? 100;
+    const users = await ctx.db.query('users').order('desc').take(limit);
+
+    const contributors = await Promise.all(
+      users.map(async (user: any) => {
+        const roles = await ctx.db
+          .query('roles')
+          .withIndex('by_userId', (q: any) => q.eq('userId', user._id))
+          .collect();
+
+        const profile = await ctx.db
+          .query('profiles')
+          .withIndex('by_userId', (q: any) => q.eq('userId', user._id))
+          .unique();
+
+        const primaryRole =
+          roles
+            .map((role: any) => role.role as string)
+            .filter((role: string): role is RoleKey => isRoleKey(role))
+            .sort((a: RoleKey, b: RoleKey) => ROLE_PRIORITY.indexOf(a) - ROLE_PRIORITY.indexOf(b))[0] ?? ROLES.reader;
+
+        return {
+          _id: user._id,
+          displayName: user.displayName ?? user.email,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+          createdAt: user.createdAt,
+          primaryRole,
+          bio: profile?.bio,
+          reputation: profile?.reputation ?? 0,
+          contributionCount: profile?.contributionCount ?? 0,
+        };
+      }),
+    );
+
+    return contributors;
+  },
+});
+
