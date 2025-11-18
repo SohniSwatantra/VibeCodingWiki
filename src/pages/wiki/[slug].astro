@@ -104,7 +104,7 @@ const formatSectionId = (heading: string) =>
       <EditingCallout articleTitle={articleData.title} />
       <EditProposalForm client:load articleSlug={articleData.slug} isAuthenticated={isAuthenticated} />
       <ModerationPanel client:load articleSlug={articleData.slug} canModerate={canModerate} />
-      <RevisionHistory articleSlug={articleData.slug} />
+      <RevisionHistory client:load articleSlug={articleData.slug} isAuthenticated={isAuthenticated} />
     </div>
 
     <aside class="flex flex-col gap-4">

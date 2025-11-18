@@ -22,7 +22,7 @@ export function EditingCallout({ articleTitle }: EditingCalloutProps) {
           Propose an edit
         </a>
         <a
-          href="/guides/contribution-playbook"
+          href="/coming-soon"
           className="rounded border border-[#a2a9b1] bg-[#f8f9fa] px-3 py-1.5 text-[#0645ad] hover:bg-white"
         >
           Read contribution guide

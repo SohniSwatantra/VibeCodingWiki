@@ -15,6 +15,7 @@ type Revision = {
 
 type RevisionHistoryProps = {
   articleSlug: string;
+  isAuthenticated?: boolean;
 };
 
 function normalizeRole(role: string | undefined): Revision['role'] {
@@ -36,7 +37,12 @@ type RevisionPayload = {
   revisions: Revision[];
 };
 
-function RevisionHistoryContent({ articleSlug }: RevisionHistoryProps) {
+function RevisionHistoryContent({ articleSlug, isAuthenticated = false }: RevisionHistoryProps) {
+  // Don't show revision history to unauthenticated users
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const { data, isLoading, isError } = useQuery<RevisionPayload>({
     queryKey: ['wiki-revisions', articleSlug],
     queryFn: async () => {

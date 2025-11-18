@@ -13,6 +13,10 @@ if (!article) {
   });
 }
 
+// Check if user is authenticated
+const currentUser = Astro.locals.user;
+const isAuthenticated = Boolean(currentUser);
+
 export async function getStaticPaths() {
   const { articles } = await fetchDirectory();
   return articles.map((article) => ({
@@ -30,7 +34,7 @@ export async function getStaticPaths() {
   </section>
 
   <div class="mt-4">
-    <RevisionHistory client:load articleSlug={article.slug} />
+    <RevisionHistory client:load articleSlug={article.slug} isAuthenticated={isAuthenticated} />
   </div>
 </AppLayout>
 
