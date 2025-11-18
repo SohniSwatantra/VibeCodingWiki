@@ -1,6 +1,6 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro';
-import { fetchDirectory, fetchPageBySlug } from '../../../lib/wiki/convexHelpers';
+import { fetchPageBySlug } from '../../../lib/wiki/convexHelpers';
 import { RevisionHistory } from '../../../components/wiki/RevisionHistory.tsx';
 
 const { slug } = Astro.params;
@@ -13,16 +13,9 @@ if (!article) {
   });
 }
 
-// Check if user is authenticated
+// Check if user is authenticated (SSR mode - Astro.locals is available)
 const currentUser = Astro.locals.user;
 const isAuthenticated = Boolean(currentUser);
-
-export async function getStaticPaths() {
-  const { articles } = await fetchDirectory();
-  return articles.map((article) => ({
-    params: { slug: article.slug },
-  }));
-}
 ---
 
 <AppLayout title={`${article.title} — History`} description={`Revision history for ${article.title}`}>
