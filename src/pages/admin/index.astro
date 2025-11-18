@@ -50,8 +50,7 @@ const stats = {
 };
 
 // Fetch all pending revisions across all pages
-// Temporarily disabled to debug Convex deployment issue
-const allPendingRevisions: any[] = [];
+const allPendingRevisions = await runConvexQuery<any[]>('pages:getAllPendingRevisions', { limit: 50 });
 ---
 
 <AppLayout title="Admin Dashboard" description="Administration panel for VibeCodingWiki">
