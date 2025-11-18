@@ -32,12 +32,25 @@ This project bootstraps the rebuild of **VibeCodingWiki.com** using Astro, TanSt
 │   ├── schema.ts             # Authoritative data model
 │   ├── types.ts              # Shared Convex types
 │   └── utils.ts              # Slug + time utilities
-├── netlify/functions/        # Autumn checkout Netlify function(s)
-├── scripts/firecrawl-fetch.js# Firecrawl ingestion helper
+├── netlify/
+│   ├── functions/            # Serverless functions (Autumn checkout, etc.)
+│   └── edge-functions/       # Edge functions (if needed)
+├── scripts/
+│   ├── firecrawl-fetch.js    # Firecrawl ingestion helper
+│   └── firecrawl-images.js   # Image scraping with Firecrawl
 ├── .env.example              # Environment variable template
-├── astro.config.mjs
-└── package.json
+├── .npmrc                    # npm configuration (legacy-peer-deps)
+├── astro.config.mjs          # Astro config with Netlify adapter
+├── netlify.toml              # Netlify build & deploy configuration
+├── package.json
+└── README.md                 # This file
 ```
+
+### Deployment Files
+
+- **netlify.toml** – Configures build settings, redirects, and serverless function routes
+- **astro.config.mjs** – Includes `@astrojs/netlify` adapter for serverless deployment
+- **.npmrc** – Configures npm to use `--legacy-peer-deps` for dependency resolution
 
 ## 🧭 Getting Started
 
@@ -211,11 +224,69 @@ Each job records the source URL and the first few discovered image URLs in the `
 
 ## 🚀 Deployment (Netlify + Cloudflare)
 
+### Primary Deployment Platform: Netlify
+
+VibeCodingWiki is deployed on **Netlify** with automatic builds from the GitHub repository.
+
+#### Initial Setup
+
 1. **Adapter** – Astro is configured with the Netlify Functions adapter in `astro.config.mjs`, producing serverless output compatible with Netlify.
-2. **Netlify project** – Connect the repository, ensure the build command is `npm run build`, and publish directory `dist/`. The provided `netlify.toml` also routes `/api/*` requests to Netlify Functions.
-3. **Environment variables** – Populate all secrets in Netlify’s dashboard (WorkOS, Autumn, Firecrawl, OpenAI, Convex, Cloudflare R2). Use environment contexts for preview/production overrides.
+2. **Netlify project** – Connect the repository to Netlify:
+   - Build command: `npm run build`
+   - Publish directory: `dist/`
+   - The provided `netlify.toml` routes `/api/*` requests to Netlify Functions
+3. **Environment variables** – Populate all secrets in Netlify's dashboard:
+   - WorkOS credentials (`WORKOS_API_KEY`, `WORKOS_CLIENT_ID`, `WORKOS_REDIRECT_URI`, `WORKOS_COOKIE_PASSWORD`)
+   - Autumn API key for payments (`AUTUMN_API_KEY`, `PUBLIC_AUTUMN_PRODUCT_ID`)
+   - Firecrawl API key for content ingestion (`FIRECRAWL_API_KEY`)
+   - OpenAI API key (`OPENAI_API_KEY`)
+   - Convex credentials (`CONVEX_URL`, `CONVEX_ADMIN_KEY`, `CONVEX_DEPLOYMENT`)
+   - Cloudflare R2 media storage (`CLOUDFLARE_R2_*`)
+   - Sentry monitoring (`PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, etc.)
 4. **Cloudflare DNS** – Create CNAME records pointing `www` to the assigned Netlify subdomain, and either use CNAME flattening or A records (`75.2.60.5`, `99.83.190.102`) for the apex. Keep the proxy enabled to leverage Cloudflare TLS and caching.
 5. **TLS & cache** – After DNS propagates, trigger certificate issuance in Netlify. In Cloudflare, enable Always Use HTTPS and configure cache rules to respect Netlify cache headers.
+
+#### Automatic Deployments
+
+- **Production**: Every push to `main` branch triggers an automatic production deployment
+- **Preview**: Pull requests automatically generate preview deployments with unique URLs
+- **Build time**: Typically ~2-3 minutes for full builds
+
+#### Netlify Agent Runner for Micro Changes
+
+For quick fixes and micro changes, you can use **Netlify Agent** to make updates directly without going through the full CI/CD pipeline:
+
+```bash
+# Install Netlify CLI globally
+npm install -g netlify-cli
+
+# Authenticate with Netlify
+netlify login
+
+# Link to your Netlify site
+netlify link
+
+# Make changes and test locally
+npm run dev
+
+# Deploy directly to Netlify (bypasses GitHub)
+netlify deploy --prod
+
+# Or deploy to preview first
+netlify deploy
+```
+
+**When to use Netlify Agent:**
+- Quick content updates (typos, text changes)
+- Small styling adjustments
+- Minor configuration tweaks
+- Emergency hotfixes
+
+**Best practices:**
+- Always test changes locally first with `npm run dev`
+- Use preview deployments (`netlify deploy`) before going to production
+- Commit changes back to GitHub after deploying to maintain version control
+- For major features, always use the GitHub → Netlify automatic deployment flow
 
 ## 🤝 Contributing
 
