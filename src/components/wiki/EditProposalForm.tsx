@@ -237,7 +237,7 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
   if (!isAuthenticated) {
     const searchParams = new URLSearchParams({ next: `/wiki/${articleSlug}` });
     return (
-      <section className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-[#202122]">Collaborate on this article</h2>
         <p className="mt-2 text-sm text-[#54595d]">
           Sign in to propose edits, attach sources, and help moderate changes.
