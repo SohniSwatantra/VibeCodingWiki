@@ -1,0 +1,35 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+---
+
+<AppLayout
+  title="Coming Soon"
+  description="This feature is coming soon to VibeCodingWiki"
+>
+  <div class="mx-auto max-w-4xl">
+    <article class="rounded border border-[#a2a9b1] bg-white p-8 shadow-sm">
+      <h1 class="mb-4 text-3xl font-semibold text-[#202122]">Coming Soon</h1>
+
+      <div class="space-y-4 text-sm text-[#202122]">
+        <p class="text-lg">
+          This feature is currently under development and will be available soon.
+        </p>
+
+        <p>
+          VibeCodingWiki is actively being developed with new features and improvements being added regularly.
+          Stay tuned for updates!
+        </p>
+
+        <div class="mt-6 rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+          <h2 class="mb-2 text-lg font-semibold text-[#202122]">What to do in the meantime?</h2>
+          <ul class="list-disc space-y-2 pl-5 text-sm text-[#54595d]">
+            <li>Browse existing <a href="/wiki" class="text-[#0645ad] hover:text-[#0b0080]">wiki articles</a></li>
+            <li>Check out the <a href="/roadmap" class="text-[#0645ad] hover:text-[#0b0080]">roadmap</a> to see what's planned</li>
+            <li>View <a href="/users" class="text-[#0645ad] hover:text-[#0b0080]">contributors</a> who are building VibeCodingWiki</li>
+            <li>Subscribe to the <a href="/newsletter" class="text-[#0645ad] hover:text-[#0b0080]">newsletter</a> for updates</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </div>
+</AppLayout>

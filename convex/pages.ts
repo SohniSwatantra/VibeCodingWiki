@@ -537,3 +537,50 @@ export const autoApproveFirstRevision = mutation({
   },
 });
 
+export const getRecentApprovedChanges = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: any, args: { limit?: number }) => {
+    const limit = args.limit ?? 50;
+
+    // Get recently approved revisions
+    const approvedRevisions = await ctx.db
+      .query('pageRevisions')
+      .withIndex('by_status', (q: any) => q.eq('status', 'approved'))
+      .order('desc')
+      .take(limit);
+
+    // Enrich with page and user data
+    const enriched = await Promise.all(
+      approvedRevisions.map(async (revision: any) => {
+        const page = await ctx.db.get(revision.pageId);
+        const author = await ctx.db.get(revision.createdBy);
+        const approver = revision.approvedBy ? await ctx.db.get(revision.approvedBy) : null;
+
+        // Get author roles
+        const authorRoles = await ctx.db
+          .query('roles')
+          .withIndex('by_userId', (q: any) => q.eq('userId', revision.createdBy))
+          .collect();
+
+        const primaryRole = authorRoles.length > 0 ? authorRoles[0].role : 'contributor';
+
+        return {
+          revisionId: revision._id,
+          pageId: page?._id,
+          pageTitle: page?.title,
+          pageSlug: page?.slug,
+          summary: revision.summary,
+          authorName: author?.displayName ?? author?.email ?? 'Unknown',
+          authorRole: primaryRole,
+          approvedAt: revision.approvedAt ?? revision.createdAt,
+          approvedByName: approver?.displayName ?? approver?.email,
+        };
+      }),
+    );
+
+    return enriched.filter((item) => item.pageId); // Filter out any missing pages
+  },
+});
+

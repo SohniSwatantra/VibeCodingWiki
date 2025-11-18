@@ -1,0 +1,93 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+---
+
+<AppLayout
+  title="Roadmap"
+  description="VibeCodingWiki development roadmap and upcoming features"
+>
+  <div class="mx-auto max-w-5xl">
+    <article class="rounded border border-[#a2a9b1] bg-white p-8 shadow-sm">
+      <h1 class="mb-4 text-3xl font-semibold text-[#202122]">VibeCodingWiki Roadmap</h1>
+      <p class="mb-8 text-sm text-[#54595d]">
+        Our vision for the future of VibeCodingWiki. This roadmap outlines the features and improvements we're working on to make the platform better for the VibeCoding community.
+      </p>
+
+      <div class="space-y-8">
+        <!-- In Progress -->
+        <section>
+          <h2 class="mb-4 flex items-center gap-2 text-xl font-semibold text-[#202122]">
+            <span class="rounded bg-[#0645ad] px-2 py-1 text-xs text-white">In Progress</span>
+            Current Development
+          </h2>
+          <div class="space-y-4">
+            <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+              <h3 class="mb-2 text-base font-semibold text-[#202122]">🔧 Bug Fixes</h3>
+              <p class="text-sm text-[#54595d]">
+                Ongoing work to identify and resolve issues across the platform, improving stability and user experience.
+              </p>
+            </div>
+
+            <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+              <h3 class="mb-2 text-base font-semibold text-[#202122]">📱 Mobile View Improvements</h3>
+              <p class="text-sm text-[#54595d]">
+                Enhancing responsive design to ensure VibeCodingWiki works seamlessly across all devices. Currently the mobile experience needs improvement.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Planned -->
+        <section>
+          <h2 class="mb-4 flex items-center gap-2 text-xl font-semibold text-[#202122]">
+            <span class="rounded bg-[#28a745] px-2 py-1 text-xs text-white">Planned</span>
+            Upcoming Features
+          </h2>
+          <div class="space-y-4">
+            <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+              <h3 class="mb-2 text-base font-semibold text-[#202122]">🔌 MCP Integration</h3>
+              <p class="text-sm text-[#54595d]">
+                Integration with Model Context Protocol (MCP) to enhance AI-assisted editing and content generation capabilities.
+              </p>
+            </div>
+
+            <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+              <h3 class="mb-2 text-base font-semibold text-[#202122]">✍️ Contribution & Moderation Flow Improvements</h3>
+              <p class="text-sm text-[#54595d]">
+                Streamlining the process for contributors to submit edits and for moderators to review and approve changes. Better diff visualization and conflict resolution.
+              </p>
+            </div>
+
+            <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+              <h3 class="mb-2 text-base font-semibold text-[#202122]">📰 News Page</h3>
+              <p class="text-sm text-[#54595d]">
+                Dedicated page for VibeCoding community news, updates, and announcements. Keep track of the latest developments in the ecosystem.
+              </p>
+            </div>
+
+            <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+              <h3 class="mb-2 text-base font-semibold text-[#202122]">📱 VibeCodingWiki App</h3>
+              <p class="text-sm text-[#54595d]">
+                Native mobile and desktop application for VibeCodingWiki, providing offline access and enhanced editing capabilities.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- How to Contribute -->
+        <section class="mt-8 rounded border border-[#0645ad] bg-[#e6f2ff] p-6">
+          <h2 class="mb-3 text-lg font-semibold text-[#202122]">Want to help shape the roadmap?</h2>
+          <p class="mb-4 text-sm text-[#202122]">
+            VibeCodingWiki is built by the community, for the community. We welcome suggestions, feedback, and contributions!
+          </p>
+          <ul class="list-disc space-y-2 pl-5 text-sm text-[#202122]">
+            <li>Join the discussion on our community channels</li>
+            <li>Submit feature requests through the wiki</li>
+            <li>Contribute code or documentation improvements</li>
+            <li>Help moderate and curate content</li>
+          </ul>
+        </section>
+      </div>
+    </article>
+  </div>
+</AppLayout>

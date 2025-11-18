@@ -1,0 +1,20 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import { RecentChanges } from '../components/app/RecentChanges.tsx';
+---
+
+<AppLayout
+  title="Recent Changes"
+  description="Recent approved changes by moderators on VibeCodingWiki"
+>
+  <div class="mx-auto max-w-6xl">
+    <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+      <h1 class="mb-4 text-2xl font-semibold text-[#202122]">Recent Changes</h1>
+      <p class="mb-6 text-sm text-[#54595d]">
+        Track the latest approved edits and updates across VibeCodingWiki. All changes shown here have been reviewed and approved by moderators.
+      </p>
+
+      <RecentChanges client:load />
+    </article>
+  </div>
+</AppLayout>
