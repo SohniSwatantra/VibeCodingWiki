@@ -1,6 +1,5 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro';
-import { NewsletterSignup } from '../components/app/NewsletterSignup.tsx';
 
 const currentUser = Astro.locals.user;
 
@@ -14,14 +13,27 @@ if (!currentUser) {
   title="VibeCoding Newsletter"
   description="Stay updated with the latest in VibeCoding"
 >
-  <div class="mx-auto max-w-3xl">
+  <div class="mx-auto max-w-7xl">
     <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
       <h2 class="mb-4 text-2xl font-semibold text-[#202122]">VibeCoding Newsletter</h2>
       <p class="mb-6 text-sm text-[#54595d]">
         Get the latest updates, tips, and insights about VibeCoding delivered to your inbox. Join our community of vibe coders!
       </p>
 
-      <NewsletterSignup client:load />
+      <!-- Embedded VibeCoding Newsletter App -->
+      <div class="relative w-full overflow-hidden rounded border border-[#c8ccd1]" style="height: 800px;">
+        <iframe
+          src="https://vibecodingnewsletter.netlify.app/"
+          class="h-full w-full"
+          frameborder="0"
+          loading="lazy"
+          title="VibeCoding Newsletter App"
+        ></iframe>
+      </div>
+
+      <p class="mt-4 text-xs text-[#72777d]">
+        Having trouble? <a href="https://vibecodingnewsletter.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-[#0645ad] hover:text-[#0b0080]">Open in new tab</a>
+      </p>
     </article>
   </div>
 </AppLayout>
