@@ -10,6 +10,7 @@ This project bootstraps the rebuild of **VibeCodingWiki.com** using Astro, TanSt
 - **Tailwind CSS** for styling
 - **Convex** schema for pages, revisions, talk threads, moderation events, ingestion jobs
 - **WorkOS** for OAuth (Google/GitHub) + email magic links, **Autumn** for donations, **Firecrawl** for content ingestion
+- **Netlify** for deployments, serverless functions, and Agent runner for micro changes
 
 ## 📂 Project Structure
 
