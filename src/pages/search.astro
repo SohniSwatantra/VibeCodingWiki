@@ -1,0 +1,31 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import { SearchResults } from '../components/app/SearchResults.tsx';
+
+const searchQuery = Astro.url.searchParams.get('search') || '';
+---
+
+<AppLayout
+  title="Search Results"
+  description={searchQuery ? `Search results for "${searchQuery}"` : 'Search VibeCodingWiki'}
+>
+  <div class="mx-auto max-w-4xl">
+    <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+      {searchQuery ? (
+        <>
+          <h2 class="mb-4 text-2xl font-semibold text-[#202122]">
+            Search results for "<span class="text-[#0645ad]">{searchQuery}</span>"
+          </h2>
+          <SearchResults query={searchQuery} client:load />
+        </>
+      ) : (
+        <div class="space-y-4">
+          <h2 class="text-2xl font-semibold text-[#202122]">Search</h2>
+          <p class="text-sm text-[#54595d]">
+            Enter a search query in the search box above to find pages.
+          </p>
+        </div>
+      )}
+    </article>
+  </div>
+</AppLayout>

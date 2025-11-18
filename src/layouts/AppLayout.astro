@@ -28,7 +28,7 @@ const currentUser = Astro.locals.user;
               <h1 class="text-[2rem] font-normal leading-tight text-[#202122]">{title}</h1>
               <p class="max-w-2xl text-sm text-[#54595d]">{description}</p>
             </div>
-            <form class="flex w-full max-w-sm items-center gap-2 rounded border border-[#a2a9b1] bg-white px-3 py-1 text-sm text-[#202122]" role="search">
+            <form action="/search" method="get" class="flex w-full max-w-sm items-center gap-2 rounded border border-[#a2a9b1] bg-white px-3 py-1 text-sm text-[#202122]" role="search">
               <label class="sr-only" for="site-search">Search Vibecodingwiki</label>
               <input
                 id="site-search"
@@ -36,6 +36,7 @@ const currentUser = Astro.locals.user;
                 type="search"
                 placeholder="Search Vibecodingwiki"
                 class="w-full border-none bg-transparent py-1 text-sm text-[#202122] focus:outline-none focus:ring-0"
+                required
               />
               <button
                 type="submit"

@@ -584,3 +584,60 @@ export const getRecentApprovedChanges = query({
   },
 });
 
+export const searchPages = query({
+  args: {
+    query: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: any, args: { query: string; limit?: number }) => {
+    const searchQuery = args.query.toLowerCase().trim();
+    const limit = args.limit ?? 20;
+
+    if (!searchQuery) {
+      return [];
+    }
+
+    // Get all published pages
+    const pages = await ctx.db
+      .query('pages')
+      .withIndex('by_status', (q: any) => q.eq('status', 'published'))
+      .collect();
+
+    // Filter pages based on search query
+    const matchingPages = pages.filter((page: any) => {
+      const titleMatch = page.title.toLowerCase().includes(searchQuery);
+      const summaryMatch = page.summary?.toLowerCase().includes(searchQuery);
+      const tagMatch = page.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery));
+
+      return titleMatch || summaryMatch || tagMatch;
+    });
+
+    // Sort by relevance (title matches first)
+    const sortedPages = matchingPages.sort((a: any, b: any) => {
+      const aTitleMatch = a.title.toLowerCase().includes(searchQuery);
+      const bTitleMatch = b.title.toLowerCase().includes(searchQuery);
+
+      if (aTitleMatch && !bTitleMatch) return -1;
+      if (!aTitleMatch && bTitleMatch) return 1;
+      return 0;
+    });
+
+    // Get approved revisions and limit results
+    const results = await Promise.all(
+      sortedPages.slice(0, limit).map(async (page: any) => {
+        const approvedRevision = page.approvedRevisionId
+          ? await ctx.db.get(page.approvedRevisionId)
+          : null;
+
+        return {
+          page,
+          approvedRevision,
+          snippet: approvedRevision?.content.substring(0, 200) ?? page.summary ?? '',
+        };
+      }),
+    );
+
+    return results;
+  },
+});
+
