@@ -35,24 +35,6 @@ const structuredSections = [
   },
 ];
 
-const featureColumns = [
-  {
-    title: 'Collaborative editing',
-    description:
-      'Retain MediaWiki-style talk pages, revision history, and watchlists while upgrading the stack to Astro + Convex + TanStack.',
-  },
-  {
-    title: 'Usage awareness',
-    description:
-      'Keep knowledge free at the point of use by tracking usage with Autumn and only charging teams for extra automation.',
-  },
-  {
-    title: 'Knowledge ingestion',
-    description:
-      'Firecrawl helps collect resources from docs, blogs, and repos, giving editors clean Markdown starting points.',
-  },
-];
-
 const { articles: featuredCollection } = await fetchDirectory({ limit: 3 });
 const featuredArticles = featuredCollection.slice(0, 3);
 ---
@@ -103,16 +85,6 @@ const featuredArticles = featuredCollection.slice(0, 3);
         </p>
       </div>
     </aside>
-  </section>
-
-  <!-- Feature boxes styled like MediaWiki portals -->
-  <section class="mt-6 grid gap-4 md:grid-cols-3">
-    {featureColumns.map((feature) => (
-      <article class="rounded border border-[#a2a9b1] bg-white p-4 shadow-sm">
-        <h3 class="mb-2 text-lg font-semibold text-[#202122]">{feature.title}</h3>
-        <p class="text-sm text-[#202122]">{feature.description}</p>
-      </article>
-    ))}
   </section>
 
   <section class="mt-6 grid gap-4 md:grid-cols-3">
