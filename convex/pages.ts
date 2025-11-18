@@ -584,6 +584,51 @@ export const getRecentApprovedChanges = query({
   },
 });
 
+export const getAllPendingRevisions = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: any, args: { limit?: number }) => {
+    const limit = args.limit ?? 50;
+
+    // Get all pending revisions
+    const pendingRevisions = await ctx.db
+      .query('pageRevisions')
+      .withIndex('by_status', (q: any) => q.eq('status', 'pending'))
+      .order('desc')
+      .take(limit);
+
+    // Enrich with page and user data
+    const enriched = await Promise.all(
+      pendingRevisions.map(async (revision: any) => {
+        const page = await ctx.db.get(revision.pageId);
+        const author = await ctx.db.get(revision.createdBy);
+
+        // Get author roles
+        const authorRoles = await ctx.db
+          .query('roles')
+          .withIndex('by_userId', (q: any) => q.eq('userId', revision.createdBy))
+          .collect();
+
+        const primaryRole = authorRoles.length > 0 ? authorRoles[0].role : 'contributor';
+
+        return {
+          revisionId: revision._id,
+          pageId: page?._id,
+          pageTitle: page?.title,
+          pageSlug: page?.slug,
+          summary: revision.summary,
+          createdAt: revision.createdAt,
+          authorName: author?.displayName ?? author?.email ?? 'Unknown',
+          authorRole: primaryRole,
+        };
+      }),
+    );
+
+    return enriched.filter((item) => item.pageId); // Filter out any missing pages
+  },
+});
+
 export const searchPages = query({
   args: {
     query: v.string(),

@@ -48,6 +48,9 @@ const stats = {
   published: pagesByStatus.published.length,
   archived: pagesByStatus.archived.length,
 };
+
+// Fetch all pending revisions across all pages
+const allPendingRevisions = await runConvexQuery<any[]>('pages:getAllPendingRevisions', { limit: 50 });
 ---
 
 <AppLayout title="Admin Dashboard" description="Administration panel for VibeCodingWiki">
@@ -76,6 +79,63 @@ const stats = {
         <p class="mt-2 text-3xl font-semibold text-[#54595d]">{stats.draft}</p>
       </div>
     </section>
+
+    <!-- Pending Revisions Queue -->
+    {allPendingRevisions && allPendingRevisions.length > 0 && (
+      <section class="rounded border border-[#f4a500] bg-[#fef6e7] p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold text-[#202122]">
+            Pending Revisions ({allPendingRevisions.length})
+          </h2>
+          <span class="rounded bg-[#f4a500] px-3 py-1 text-xs font-semibold text-white">
+            Needs Moderation
+          </span>
+        </div>
+        <p class="mt-2 text-sm text-[#54595d]">
+          These revisions are waiting for your review and approval
+        </p>
+        <div class="mt-4 space-y-2">
+          {allPendingRevisions.map((item: any) => (
+            <div class="rounded border border-[#a2a9b1] bg-white p-4">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <h3 class="font-semibold text-[#202122]">
+                    <a class="text-[#0645ad] hover:underline" href={`/wiki/${item.pageSlug}`}>
+                      {item.pageTitle}
+                    </a>
+                  </h3>
+                  <p class="mt-1 text-sm text-[#54595d]">
+                    {item.summary || '(No summary provided)'}
+                  </p>
+                  <div class="mt-2 flex items-center gap-3 text-xs text-[#72777d]">
+                    <span>By: <strong>{item.authorName}</strong></span>
+                    <span>•</span>
+                    <span>Role: {item.authorRole.replace('_', ' ')}</span>
+                    <span>•</span>
+                    <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <a
+                  href={`/wiki/${item.pageSlug}#propose-edit`}
+                  class="ml-4 rounded border border-[#0645ad] bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b0080]"
+                >
+                  Review
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {allPendingRevisions && allPendingRevisions.length === 0 && (
+      <section class="rounded border border-[#c8ccd1] bg-[#e8f4e8] p-6 shadow-sm">
+        <h2 class="text-xl font-semibold text-[#008000]">✓ All Clear!</h2>
+        <p class="mt-2 text-sm text-[#54595d]">
+          No pending revisions waiting for moderation
+        </p>
+      </section>
+    )}
 
     <!-- Admin Actions -->
     <section class="rounded border border-[#c8ccd1] bg-white p-6 shadow-sm">
