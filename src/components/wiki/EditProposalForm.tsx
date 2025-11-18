@@ -265,16 +265,29 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
     );
   }
 
+  // Show loading state while content is being fetched
+  if (isLoadingContent || isLoadingPageData) {
+    return (
+      <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-[#202122]">Propose an edit</h2>
+        <p className="mt-2 text-sm text-[#54595d]">
+          The editor below is pre-filled with the current page content. Make your changes directly, and moderators will review a highlighted diff showing exactly what changed.
+        </p>
+        <div className="mt-4 flex flex-col items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#c8ccd1] border-t-[#3366cc]"></div>
+          <p className="mt-4 text-sm text-[#72777d]">⏳ Loading current page content...</p>
+          <p className="mt-2 text-xs text-[#54595d]">Please wait while we fetch the latest version</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-[#202122]">Propose an edit</h2>
       <p className="mt-2 text-sm text-[#54595d]">
         The editor below is pre-filled with the current page content. Make your changes directly, and moderators will review a highlighted diff showing exactly what changed.
       </p>
-
-      {isLoadingContent && (
-        <p className="mt-3 text-xs text-[#72777d]">Loading current content...</p>
-      )}
 
       <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
         <div>
@@ -313,26 +326,19 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
             onChange={(event) => setDetails(event.target.value)}
             rows={12}
             className="mt-1 w-full rounded border border-[#a2a9b1] bg-white px-3 py-2 text-sm text-[#202122] font-mono focus:border-[#3366cc] focus:outline-none"
-            placeholder={isLoadingContent ? "Loading current content..." : "Edit the page content..."}
-            disabled={isLoadingContent}
+            placeholder="Edit the page content..."
           />
           <p className="mt-1 text-xs text-[#72777d]">
             ✏️ Make your edits above. Moderators will see a diff highlighting additions (green) and deletions (red).
           </p>
         </div>
 
-        {isLoadingContent && (
-          <p className="text-sm text-[#72777d]">
-            ⏳ Loading current page content...
-          </p>
-        )}
-
         <button
           type="submit"
           className="rounded border border-[#3366cc] bg-[#3366cc] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#254a99] disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={proposalMutation.isPending || isLoadingContent}
+          disabled={proposalMutation.isPending}
         >
-          {proposalMutation.isPending ? 'Submitting…' : isLoadingContent ? 'Loading content…' : 'Submit proposal'}
+          {proposalMutation.isPending ? 'Submitting…' : 'Submit proposal'}
         </button>
       </form>
 
