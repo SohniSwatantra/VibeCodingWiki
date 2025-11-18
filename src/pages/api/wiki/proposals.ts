@@ -85,11 +85,24 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   // Include the current approved content for pre-filling the editor
   // Convert structured sections and timeline to editable Markdown format
-  const approvedContent = sectionsToMarkdown(
-    entry.approvedRevision?.sections,
-    entry.approvedRevision?.timeline,
-    entry.approvedRevision?.content // Fallback to raw content if no sections
-  );
+  // If no approved revision, fall back to the latest pending revision
+  let approvedContent = '';
+
+  if (entry.approvedRevision) {
+    approvedContent = sectionsToMarkdown(
+      entry.approvedRevision.sections,
+      entry.approvedRevision.timeline,
+      entry.approvedRevision.content
+    );
+  } else if (revisions.length > 0) {
+    // No approved revision yet - use the latest revision (even if pending)
+    const latestRevision = revisions[0];
+    approvedContent = sectionsToMarkdown(
+      latestRevision.sections,
+      latestRevision.timeline,
+      latestRevision.content
+    );
+  }
 
   return new Response(
     JSON.stringify({
