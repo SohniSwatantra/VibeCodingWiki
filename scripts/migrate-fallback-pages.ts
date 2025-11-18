@@ -81,7 +81,7 @@ async function migratePages() {
       const mergedContent = sections.map((s) => s.markdown).join('\n\n') || article.summary;
 
       // Create the page in Convex using admin authentication
-      await client.mutation(
+      const createResult = await client.mutation(
         api.pages.createPage,
         {
           title: article.title,
@@ -100,7 +100,12 @@ async function migratePages() {
         }
       );
 
-      console.log(`  ✅ Created successfully`);
+      // Auto-approve the first revision so the page has editable content
+      await client.mutation(api.pages.autoApproveFirstRevision, {
+        pageId: createResult.pageId,
+      });
+
+      console.log(`  ✅ Created and approved successfully`);
       successCount++;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

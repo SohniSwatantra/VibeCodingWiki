@@ -484,3 +484,56 @@ export const rollbackLatestApproval = mutation({
   },
 });
 
+/**
+ * Auto-approve first revision for migrated pages from fallback data
+ * This is used during migrations to ensure pages have approved content
+ * No role check - intended for migration scripts only
+ */
+export const autoApproveFirstRevision = mutation({
+  args: {
+    pageId: v.id('pages'),
+  },
+  handler: async (ctx: any, args: { pageId: string }) => {
+    const page = await ctx.db.get(args.pageId);
+    if (!page) {
+      throw new Error('Page not found.');
+    }
+
+    // Check if page already has an approved revision
+    if (page.approvedRevisionId) {
+      return { pageId: page._id, revisionId: page.approvedRevisionId, alreadyApproved: true };
+    }
+
+    // Find the first revision
+    const revisions = await ctx.db
+      .query('pageRevisions')
+      .withIndex('by_pageId', (q: any) => q.eq('pageId', page._id))
+      .order('asc')
+      .take(1);
+
+    if (revisions.length === 0) {
+      throw new Error('No revisions found for page.');
+    }
+
+    const firstRevision = revisions[0];
+    const timestamp = now();
+
+    // Mark revision as approved (system approval)
+    await ctx.db.patch(firstRevision._id, {
+      status: 'approved',
+      approvedAt: timestamp,
+    });
+
+    // Update page to point to the approved revision
+    await ctx.db.patch(page._id, {
+      approvedRevisionId: firstRevision._id,
+      status: 'published',
+      summary: firstRevision.summary ?? page.summary,
+      tags: firstRevision.tags ?? page.tags,
+      updatedAt: timestamp,
+    });
+
+    return { pageId: page._id, revisionId: firstRevision._id, alreadyApproved: false };
+  },
+});
+

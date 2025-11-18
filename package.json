@@ -10,7 +10,8 @@
     "firecrawl:fetch": "node scripts/firecrawl-fetch.js",
     "firecrawl:images": "node scripts/firecrawl-images.js",
     "seed:convex": "tsx scripts/seed-convex.ts",
-    "migrate:pages": "tsx scripts/migrate-fallback-pages.ts"
+    "migrate:pages": "tsx scripts/migrate-fallback-pages.ts",
+    "approve:revisions": "tsx scripts/approve-first-revisions.ts"
   },
   "dependencies": {
     "@astrojs/netlify": "^6.3.2",

@@ -209,7 +209,15 @@ export async function ensurePageForSlug(slug: string, actingIdentity: ActingIden
     return null;
   }
 
-  console.log('ensurePageForSlug: Page created, fetching entry');
+  console.log('ensurePageForSlug: Page created, auto-approving first revision');
+  // Auto-approve the first revision so the edit form has content to display
+  await runConvexMutation(
+    'pages:autoApproveFirstRevision',
+    { pageId: createResult.pageId },
+    { actingAs: actingIdentity }
+  );
+
+  console.log('ensurePageForSlug: First revision approved, fetching entry');
   entry = await runConvexQuery<any>('pages:getPageBySlug', { slug });
   return entry;
 }
