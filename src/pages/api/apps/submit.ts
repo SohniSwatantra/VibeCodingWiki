@@ -9,12 +9,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
     }
 
-    const convexUser = await getConvexUserByWorkOSId(workosUser.id);
+    // Try to get existing Convex user
+    let convexUser = await getConvexUserByWorkOSId(workosUser.id);
+
+    // If user doesn't exist in Convex, create them
     if (!convexUser) {
-      return new Response(
-        JSON.stringify({ message: 'User profile not found in Convex.' }),
-        { status: 403 }
-      );
+      console.log('Convex user not found, syncing WorkOS user:', workosUser.id);
+      await runConvexMutation('users:syncWorkOSIdentity', {
+        workosUserId: workosUser.id,
+        email: workosUser.email || '',
+        firstName: workosUser.firstName,
+        lastName: workosUser.lastName,
+        avatarUrl: workosUser.profilePictureUrl,
+      });
+
+      // Fetch the newly created user
+      convexUser = await getConvexUserByWorkOSId(workosUser.id);
+
+      if (!convexUser) {
+        return new Response(
+          JSON.stringify({ message: 'Failed to create user profile. Please try again.' }),
+          { status: 500 }
+        );
+      }
     }
 
     const body = await request.json();

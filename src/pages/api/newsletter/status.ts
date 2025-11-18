@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { runConvexQuery } from '../../../lib/convex.server';
+import { runConvexQuery, runConvexMutation } from '../../../lib/convex.server';
 import { getConvexUserByWorkOSId, buildActingIdentity } from '../../../lib/wiki/convexHelpers';
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -9,12 +9,27 @@ export const GET: APIRoute = async ({ locals }) => {
       return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
     }
 
-    const convexUser = await getConvexUserByWorkOSId(workosUser.id);
+    // Try to get existing Convex user
+    let convexUser = await getConvexUserByWorkOSId(workosUser.id);
+
+    // If user doesn't exist in Convex, create them
     if (!convexUser) {
-      return new Response(
-        JSON.stringify({ message: 'User profile not found in Convex.' }),
-        { status: 403 }
-      );
+      await runConvexMutation('users:syncWorkOSIdentity', {
+        workosUserId: workosUser.id,
+        email: workosUser.email || '',
+        firstName: workosUser.firstName,
+        lastName: workosUser.lastName,
+        avatarUrl: workosUser.profilePictureUrl,
+      });
+
+      convexUser = await getConvexUserByWorkOSId(workosUser.id);
+
+      if (!convexUser) {
+        return new Response(
+          JSON.stringify({ message: 'Failed to create user profile. Please try again.' }),
+          { status: 500 }
+        );
+      }
     }
 
     const actingIdentity = buildActingIdentity(workosUser, convexUser);
