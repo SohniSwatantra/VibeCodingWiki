@@ -52,6 +52,7 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
       }
       const payload = await response.json();
       console.log('[CONTENT] Received payload:', payload);
+      console.log('[CONTENT] Approved content length:', payload.approvedContent?.length || 0);
       // Use the approvedContent field directly from the API
       return {
         currentContent: payload.approvedContent || '',
@@ -59,6 +60,8 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
       };
     },
     staleTime: 1000 * 30,
+    retry: 2, // Retry failed requests
+    retryDelay: 1000, // Wait 1 second between retries
   });
 
   // Pre-fill the details field with current content when it loads
@@ -74,9 +77,15 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
   useEffect(() => {
     if (!isLoadingPageData && isLoadingContent) {
       console.log('[CONTENT] Query finished, stopping loading state');
+      console.log('[CONTENT] Current details length:', details.length);
+      console.log('[CONTENT] Page data content length:', pageData?.currentContent?.length || 0);
+      // If details is still empty, force populate it
+      if (!details || details.length === 0) {
+        setDetails(pageData?.currentContent || '');
+      }
       setIsLoadingContent(false);
     }
-  }, [isLoadingPageData, isLoadingContent]);
+  }, [isLoadingPageData, isLoadingContent, details, pageData]);
 
   const normalizeRole = (role: string | undefined): Proposal['role'] => {
     const formatted = role?.replace(/_/g, '-') ?? 'contributor';
@@ -167,7 +176,10 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Please sign in before proposing edits.');
+            // Session expired or user not authenticated - redirect to login
+            const searchParams = new URLSearchParams({ next: `/wiki/${articleSlug}` });
+            window.location.href = `/login?${searchParams.toString()}`;
+            throw new Error('Redirecting to login...');
           }
           if (response.status === 504) {
             // Gateway Timeout - server took too long
