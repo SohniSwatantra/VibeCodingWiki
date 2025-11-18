@@ -16,6 +16,7 @@ type Proposal = {
 type EditProposalFormProps = {
   articleSlug: string;
   isAuthenticated?: boolean;
+  userRole?: 'super_admin' | 'moderator' | 'contributor' | 'reader';
 };
 
 type ProposalPayload = {
@@ -27,7 +28,7 @@ type ProposalPayload = {
  * Submissions are stored in-memory for now and displayed beneath the form
  * to emulate a collaborative workflow until Convex persistence is added.
  */
-function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditProposalFormProps) {
+function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole = 'reader' }: EditProposalFormProps) {
   const [contributor, setContributor] = useState('');
   const [summary, setSummary] = useState('');
   const [details, setDetails] = useState('');
@@ -246,8 +247,24 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
     console.log('[FORM] Mutation called, isPending:', proposalMutation.isPending);
   };
 
-  // Always render the form - backend will handle authentication via 401 redirect
-  // This prevents hydration mismatches between server and client
+  // Hide form for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-[#202122]">Propose an edit</h2>
+        <p className="mt-2 text-sm text-[#54595d]">
+          Sign in to propose edits to this page. Your contributions will be reviewed by moderators before being published.
+        </p>
+        <a
+          href={`/login?next=${encodeURIComponent(`/wiki/${articleSlug}`)}`}
+          className="mt-4 inline-block rounded border border-[#3366cc] bg-[#3366cc] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#254a99]"
+        >
+          Sign in to propose edit
+        </a>
+      </section>
+    );
+  }
+
   return (
     <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-[#202122]">Propose an edit</h2>
@@ -339,8 +356,21 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
                   {proposal.contributor} · {new Date(proposal.createdAt).toLocaleString()} · {proposal.role.replace('-', ' ')}
                 </p>
                 <p className="mt-1 font-semibold">{proposal.summary}</p>
-                <p className="mt-1 text-sm text-[#54595d]">{proposal.details}</p>
-                <p className="mt-2 text-xs text-[#54595d]">Status: {proposal.status}</p>
+                {/* Show full details only to super_admins */}
+                {userRole === 'super_admin' ? (
+                  <>
+                    <p className="mt-1 text-sm text-[#54595d]">{proposal.details}</p>
+                    <p className="mt-2 text-xs text-[#54595d]">Status: {proposal.status}</p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-xs text-[#54595d]">
+                    Status: <span className={`font-semibold ${
+                      proposal.status === 'published' ? 'text-[#008000]' :
+                      proposal.status === 'pending' ? 'text-[#f4a500]' :
+                      'text-[#d33f3f]'
+                    }`}>{proposal.status}</span>
+                  </p>
+                )}
               </li>
             ))}
           </ul>

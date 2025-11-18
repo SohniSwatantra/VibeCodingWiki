@@ -22,18 +22,25 @@ Authenticated or anonymous visitors can browse VibeCodingWiki, search for topics
 
 ---
 
-### User Story 2 - Propose and moderate edits (Priority: P2)
+### User Story 2 - Propose and moderate edits with role-based access (Priority: P2)
 
-Signed-in contributors can submit edit proposals; moderators review revisions, approve, reject, or rollback using Convex-backed workflow.
+Authenticated users can submit edit proposals with role-based visibility controls; moderators and super_admins review revisions, approve, reject, or rollback using Convex-backed workflow.
 
-**Why this priority**: Collaborative knowledge base relies on contributions and moderation to maintain quality.
+**Why this priority**: Collaborative knowledge base relies on contributions and moderation to maintain quality while protecting user privacy.
 
-**Independent Test**: Log in via WorkOS, submit proposal on `/wiki/<slug>/edit`, verify revision enters moderation queue, approve via moderation panel to publish.
+**Independent Test**: Log in via WorkOS, submit proposal on wiki page, verify revision enters moderation queue, approve via moderation panel to publish.
 
 **Acceptance Scenarios**:
 
-1. **Given** a contributor, **When** they submit an edit proposal, **Then** a pending revision is created and visible in moderation queue.
-2. **Given** a moderator, **When** they approve the pending revision, **Then** the article updates and revision history shows new status.
+1. **Given** an unauthenticated user, **When** they visit a wiki page, **Then** they see NO "Propose an edit" form and NO "Recent proposals" section.
+2. **Given** an unauthenticated user, **When** they click any propose edit link, **Then** they are redirected to sign-in page with return URL to original page.
+3. **Given** an authenticated contributor, **When** they visit a wiki page, **Then** they see "Propose an edit" form prefilled with current page content.
+4. **Given** an authenticated contributor, **When** they submit an edit proposal, **Then** a pending revision is created and visible in moderation queue for moderators/super_admins.
+5. **Given** an authenticated contributor, **When** they view Recent proposals, **Then** they see 2-line summary (name, date, role, title, status) without full content.
+6. **Given** a super_admin, **When** they view Recent proposals, **Then** they see FULL past changes with complete details.
+7. **Given** a moderator, **When** they visit any wiki page via normal URL, **Then** they can see and use moderation panel to approve/reject proposals.
+8. **Given** a super_admin, **When** they visit any wiki page, **Then** they have all moderator permissions plus full history access.
+9. **Given** a moderator or super_admin, **When** they approve a pending revision, **Then** the article updates and revision history shows new status.
 
 ---
 
@@ -74,6 +81,15 @@ Contributors use Talk pages to start threads, reply, and coordinate improvements
 - **FR-009**: Netlify deployment MUST serve serverless functions for auth, moderation, AI, and ingestion endpoints.
 - **FR-010**: Every pull request MUST pass CodeRabbit's automated review before merge to ensure accessibility, security, and performance regressions are caught.
 - **FR-011**: Observability MUST stream client + server exceptions to Sentry with documented sample-rate controls and verification steps.
+- **FR-021**: System MUST hide "Propose an edit" form and "Recent proposals" section from unauthenticated users.
+- **FR-022**: System MUST redirect unauthenticated users to sign-in page with return URL when attempting to propose edits.
+- **FR-023**: System MUST prefill edit form with current page content for all authenticated users.
+- **FR-024**: System MUST show 2-line summary of Recent proposals (name, date, role, title, status) to contributors.
+- **FR-025**: System MUST show FULL past changes in Recent proposals to super_admins only.
+- **FR-026**: System MUST allow moderators to approve/reject proposals on regular wiki page URLs (not restricted to admin dashboard).
+- **FR-027**: System MUST grant super_admins all moderator permissions plus full history access.
+- **FR-028**: System MUST ensure first user is assigned super_admin role; subsequent users get contributor role.
+- **FR-029**: System MUST support role hierarchy: super_admin (highest) > moderator > contributor > reader (lowest).
 
 ### Key Entities
 

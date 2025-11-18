@@ -86,13 +86,55 @@ Ports & URLs:
 
 - Run `npm run astro -- check` to verify type safety after schema or function changes
 
-## 🔐 Authentication & Billing helpers
+## 🔐 Authentication & Role-Based Access Control
+
+VibeCodingWiki implements a comprehensive authentication and role-based access control system to protect user privacy and ensure quality contributions.
+
+### Authentication
 
 - `src/pages/api/auth/workos/login.ts` – starts OAuth with Google/GitHub via WorkOS
 - `src/pages/api/auth/workos/callback.ts` – finalises login, seals session cookies
 - `src/pages/api/auth/workos/magic-link.ts` – request/verify email magic codes (dev mode echoes the code)
 - `src/pages/api/auth/workos/logout.ts` – clears local session cookies
 - `netlify/functions/autumn-checkout.ts` – serverless endpoint for Autumn donation checkout
+
+### User Roles & Permissions
+
+The wiki supports four role levels with progressive permissions:
+
+**1. Readers (Unauthenticated Users)**
+- View published wiki articles
+- Search and browse content
+- See "Sign in to propose edit" prompt on wiki pages
+
+**2. Contributors (Authenticated Users)**
+- All reader permissions +
+- Propose edits to wiki pages
+- Edit form prefilled with current page content
+- View recent proposals (summary view)
+- Participate in talk page discussions
+
+**3. Moderators**
+- All contributor permissions +
+- Approve or reject edit proposals
+- Access moderation panel on any wiki page
+- Rollback published changes if needed
+- See diff highlighting for proposed changes
+
+**4. Administrators**
+- All moderator permissions +
+- Access admin dashboard
+- Assign roles to other users
+- View complete edit history and proposal details
+- Manage system-wide settings
+
+### Key Features
+
+- **Smart Edit Workflow**: Edit forms are prefilled with current content, making contributions faster
+- **Privacy Protection**: Unauthenticated users cannot see edit forms or proposal history
+- **Seamless Sign-in**: Clicking "Propose edit" redirects to login and returns you to the same page
+- **Diff-Based Review**: Moderators see exactly what changed with color-coded highlighting
+- **Role Hierarchy**: Permissions scale progressively from reader to administrator
 
 Environment variables:
 

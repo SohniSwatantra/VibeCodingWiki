@@ -21,12 +21,22 @@ const isAuthenticated = Boolean(Astro.locals.user);
 
 // Check if user has moderator or super_admin role
 let canModerate = false;
+let userRole = 'reader';
 if (Astro.locals.user) {
   const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
   if (convexUser) {
     const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
     const roleNames = userRoles?.map((r: any) => r.role) ?? [];
     canModerate = roleNames.includes('moderator') || roleNames.includes('super_admin');
+
+    // Get the highest priority role
+    if (roleNames.includes('super_admin')) {
+      userRole = 'super_admin';
+    } else if (roleNames.includes('moderator')) {
+      userRole = 'moderator';
+    } else if (roleNames.includes('contributor')) {
+      userRole = 'contributor';
+    }
   }
 }
 
@@ -102,7 +112,7 @@ const formatSectionId = (heading: string) =>
       )}
 
       <EditingCallout articleTitle={articleData.title} />
-      <EditProposalForm client:load articleSlug={articleData.slug} isAuthenticated={isAuthenticated} />
+      <EditProposalForm client:load articleSlug={articleData.slug} isAuthenticated={isAuthenticated} userRole={userRole} />
       <ModerationPanel client:load articleSlug={articleData.slug} canModerate={canModerate} />
       <RevisionHistory client:load articleSlug={articleData.slug} isAuthenticated={isAuthenticated} />
     </div>

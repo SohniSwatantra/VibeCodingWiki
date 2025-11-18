@@ -92,6 +92,68 @@ The wiki now uses an intelligent diff-based editing system instead of full conte
 - Utilities: `src/lib/diff/diffUtils.ts` (generateDiff, applyDiff, calculateDiffStats)
 - Conflict policy: Reject on base mismatch (no auto-merge)
 
+### Role-Based Access Control (Implemented)
+The wiki implements comprehensive role-based access control to protect user privacy and control feature visibility:
+
+**Role Hierarchy:**
+1. **super_admin** (highest) - All permissions + full history access
+2. **moderator** - Can approve/reject edits on any page
+3. **contributor** - Can propose edits
+4. **reader** (lowest) - Can view published content only
+
+**Authentication & Access Flow:**
+
+**Non-Authenticated Users:**
+- ❌ NO "Propose an edit" form visible
+- ❌ NO "Recent proposals" section visible
+- ❌ NO revision history visible
+- ✅ Can click "Sign in to propose edit" button
+- ✅ Redirected to login with return URL: `/login?next=/wiki/{slug}`
+- ✅ After authentication, returned to original page
+
+**Authenticated Contributors:**
+- ✅ Can see "Propose an edit" form
+- ✅ Form prefilled with current page content
+- ✅ Can edit and submit proposals
+- ✅ Recent proposals shows 2-line summary:
+  - Name, date, role, title
+  - Status badge (pending/published/rejected)
+  - NO full content details
+- ✅ Can see revision history
+- ❌ Cannot approve/reject proposals
+
+**Moderators:**
+- ✅ All contributor permissions +
+- ✅ Can see moderation panel on regular wiki pages (not restricted to admin URL)
+- ✅ Can approve/reject/rollback proposals
+- ✅ See diff view with change highlights
+- ✅ Same Recent proposals view as contributors
+
+**Super Admins:**
+- ✅ All moderator permissions +
+- ✅ Can access admin dashboard (`/admin`)
+- ✅ Can access pages via normal URLs too
+- ✅ See FULL past changes in Recent proposals (complete content details)
+- ✅ Can assign roles to other users
+- ✅ First user automatically becomes super_admin
+- ✅ Acts as moderator by default (can moderate on normal page URLs)
+
+**Implementation Details:**
+- Files Modified:
+  - `src/pages/wiki/[slug].astro` - Added userRole detection and passing to components
+  - `src/components/wiki/EditProposalForm.tsx` - Added authentication checks, sign-in redirect, role-based Recent proposals display
+  - `src/components/wiki/RevisionHistory.tsx` - Already hides for non-authenticated users
+  - `src/components/wiki/ModerationPanel.tsx` - Already checks canModerate permission
+- Role Assignment Logic: `convex/users.ts` (syncWorkOSIdentity mutation)
+- Role Management: `convex/roles.ts` (assignRole mutation, getUserByEmail query)
+
+**Security Considerations:**
+- All authentication checks performed server-side in Astro
+- Client-side components receive boolean flags (isAuthenticated, canModerate)
+- User role determined from Convex roles table
+- No sensitive data exposed to non-authenticated users
+- Return URLs validated to prevent open redirects
+
 ## Testing Strategy
 - **Unit Tests**: Pending (future) for Convex functions and React components (placeholder).
 - **Integration Tests**: Manual verification of auth/login/logout, proposal submission, moderation actions, talk board interactions, AI draft generation.
