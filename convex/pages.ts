@@ -597,14 +597,11 @@ export const searchPages = query({
       return [];
     }
 
-    // Get all published pages
-    const pages = await ctx.db
-      .query('pages')
-      .withIndex('by_status', (q: any) => q.eq('status', 'published'))
-      .collect();
+    // Get all pages (not just published - include pending with approved revisions)
+    const allPages = await ctx.db.query('pages').collect();
 
     // Filter pages based on search query
-    const matchingPages = pages.filter((page: any) => {
+    const matchingPages = allPages.filter((page: any) => {
       const titleMatch = page.title.toLowerCase().includes(searchQuery);
       const summaryMatch = page.summary?.toLowerCase().includes(searchQuery);
       const tagMatch = page.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery));
@@ -612,8 +609,13 @@ export const searchPages = query({
       return titleMatch || summaryMatch || tagMatch;
     });
 
-    // Sort by relevance (title matches first)
+    // Sort by relevance (title matches first, then published status)
     const sortedPages = matchingPages.sort((a: any, b: any) => {
+      // Prioritize published pages
+      if (a.status === 'published' && b.status !== 'published') return -1;
+      if (a.status !== 'published' && b.status === 'published') return 1;
+
+      // Then prioritize title matches
       const aTitleMatch = a.title.toLowerCase().includes(searchQuery);
       const bTitleMatch = b.title.toLowerCase().includes(searchQuery);
 
