@@ -6,6 +6,19 @@ publish = "dist"
 NODE_VERSION = "20"
 # NETLIFY=true is automatically set by Netlify during builds
 
+# Force HTTPS - redirect all HTTP traffic to HTTPS
+[[redirects]]
+from = "http://vibecodingwiki.com/*"
+to = "https://vibecodingwiki.com/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "http://www.vibecodingwiki.com/*"
+to = "https://www.vibecodingwiki.com/:splat"
+status = 301
+force = true
+
 # Note: Functions are handled automatically by @astrojs/netlify adapter
 # No need to manually configure functions directory or redirects
 
