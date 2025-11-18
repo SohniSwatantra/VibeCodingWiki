@@ -246,24 +246,8 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
     console.log('[FORM] Mutation called, isPending:', proposalMutation.isPending);
   };
 
-  if (!isAuthenticated) {
-    const searchParams = new URLSearchParams({ next: `/wiki/${articleSlug}` });
-    return (
-      <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-[#202122]">Collaborate on this article</h2>
-        <p className="mt-2 text-sm text-[#54595d]">
-          Sign in to propose edits, attach sources, and help moderate changes.
-        </p>
-        <a
-          className="mt-3 inline-flex items-center justify-center rounded border border-[#3366cc] bg-[#3366cc] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#254a99]"
-          href={`/login?${searchParams.toString()}`}
-        >
-          Sign in to contribute
-        </a>
-      </section>
-    );
-  }
-
+  // Always render the form - backend will handle authentication via 401 redirect
+  // This prevents hydration mismatches between server and client
   return (
     <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-[#202122]">Propose an edit</h2>
@@ -320,12 +304,18 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true }: EditPr
           </p>
         </div>
 
+        {isLoadingContent && (
+          <p className="text-sm text-[#72777d]">
+            ⏳ Loading current page content...
+          </p>
+        )}
+
         <button
           type="submit"
-          className="rounded border border-[#3366cc] bg-[#3366cc] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#254a99] disabled:opacity-60"
-          disabled={proposalMutation.isPending}
+          className="rounded border border-[#3366cc] bg-[#3366cc] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#254a99] disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={proposalMutation.isPending || isLoadingContent}
         >
-          {proposalMutation.isPending ? 'Submitting…' : 'Submit proposal'}
+          {proposalMutation.isPending ? 'Submitting…' : isLoadingContent ? 'Loading content…' : 'Submit proposal'}
         </button>
       </form>
 

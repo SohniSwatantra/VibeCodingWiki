@@ -78,7 +78,7 @@ export const GET: APIRoute = async ({ request }) => {
         serializeCookie('vcw_user_preview', Buffer.from(JSON.stringify(userPreview)).toString('base64url'), {
           secure,
           sameSite: 'lax',
-          maxAge: 60 * 10,
+          maxAge: 60 * 60 * 24 * 30, // 30 days - match session cookie duration
         }),
       );
     }

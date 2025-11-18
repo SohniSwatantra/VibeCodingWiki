@@ -78,8 +78,8 @@ export async function getUserFromRequest(request: Request) {
     const authPromise = session.authenticate();
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new Error('WorkOS authentication timed out after 3 seconds'));
-      }, 3000);
+        reject(new Error('WorkOS authentication timed out after 10 seconds'));
+      }, 10000); // Increased from 3s to 10s to handle slower networks
     });
     
     const auth = await Promise.race([authPromise, timeoutPromise]);
