@@ -73,16 +73,9 @@ export async function getUserFromRequest(request: Request) {
       sessionData: sealedSession,
       cookiePassword,
     });
-    
-    // Add timeout to prevent hanging - WorkOS auth should be fast (local cookie validation)
-    const authPromise = session.authenticate();
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error('WorkOS authentication timed out after 10 seconds'));
-      }, 10000); // Increased from 3s to 10s to handle slower networks
-    });
-    
-    const auth = await Promise.race([authPromise, timeoutPromise]);
+
+    // Authenticate the session without timeout - let WorkOS handle it
+    const auth = await session.authenticate();
     if (!auth.authenticated || !auth.user) {
       return undefined;
     }
@@ -96,13 +89,7 @@ export async function getUserFromRequest(request: Request) {
       profilePictureUrl: user.profilePictureUrl,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    // Don't log timeout errors as errors - they're expected if WorkOS is slow/unavailable
-    if (errorMessage.includes('timed out')) {
-      console.warn('WorkOS authentication timed out, treating as unauthenticated');
-    } else {
-      console.error('Failed to load WorkOS session', error);
-    }
+    console.error('Failed to load WorkOS session', error);
     return undefined;
   }
 }
