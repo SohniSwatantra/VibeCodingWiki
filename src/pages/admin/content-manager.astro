@@ -1,0 +1,290 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import { runConvexQuery } from '../../lib/convex.server';
+
+// Check authentication and super_admin role
+const isAuthenticated = Boolean(Astro.locals.user);
+if (!isAuthenticated) {
+  return Astro.redirect('/login?next=/admin/content-manager');
+}
+
+// Get user roles
+const { getConvexUserByWorkOSId } = await import('../../lib/wiki/convexHelpers');
+const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+if (!convexUser) {
+  return new Response('User not found in database', { status: 403 });
+}
+
+const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+const isSuperAdmin = roleNames.includes('super_admin');
+
+if (!isSuperAdmin) {
+  return new Response('Access denied. Super admin role required.', { status: 403 });
+}
+
+// Fetch all pages
+const allPages = await runConvexQuery<any[]>('pages:listPages', { limit: 200 }) ?? [];
+---
+
+<AppLayout title="Content Manager" description="Manage page content">
+  <div class="max-w-6xl mx-auto py-8 px-4">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-[#202122]">Content Manager</h1>
+      <p class="text-sm text-[#54595d] mt-2">Super Admin Tool - Direct content management</p>
+    </div>
+
+    <div class="rounded border border-[#c8ccd1] bg-white p-6 shadow-sm">
+      <form id="content-form" class="space-y-4">
+        <!-- Page Selection -->
+        <div>
+          <label for="page-select" class="block text-sm font-semibold text-[#202122] mb-2">
+            Select Page
+          </label>
+          <select
+            id="page-select"
+            class="w-full rounded border border-[#a2a9b1] px-3 py-2 text-sm text-[#202122] focus:border-[#3366cc] focus:outline-none"
+          >
+            <option value="">-- Select a page --</option>
+            {allPages.map((entry: any) => (
+              <option value={entry.page.slug} data-page-id={entry.page._id}>
+                {entry.page.title} ({entry.page.status})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Page Info -->
+        <div id="page-info" class="hidden rounded bg-[#f8f9fa] p-4 text-sm">
+          <p><strong>Title:</strong> <span id="info-title"></span></p>
+          <p><strong>Slug:</strong> <span id="info-slug"></span></p>
+          <p><strong>Status:</strong> <span id="info-status"></span></p>
+          <p><strong>Current Revision:</strong> <span id="info-revision"></span></p>
+        </div>
+
+        <!-- Markdown Editor -->
+        <div>
+          <label for="content-markdown" class="block text-sm font-semibold text-[#202122] mb-2">
+            Page Content (Markdown)
+          </label>
+          <textarea
+            id="content-markdown"
+            rows={20}
+            class="w-full rounded border border-[#a2a9b1] px-3 py-2 text-sm text-[#202122] font-mono focus:border-[#3366cc] focus:outline-none"
+            placeholder="Paste or write your Markdown content here...
+
+Use standard Markdown:
+## Section Heading
+Content here...
+
+## Timeline
+**2025** - **Event**: Description"
+          ></textarea>
+          <p class="mt-2 text-xs text-[#54595d]">
+            Format: Use ## for headings, add a ## Timeline section for timeline entries
+          </p>
+        </div>
+
+        <!-- Summary -->
+        <div>
+          <label for="edit-summary" class="block text-sm font-semibold text-[#202122] mb-2">
+            Edit Summary
+          </label>
+          <input
+            type="text"
+            id="edit-summary"
+            class="w-full rounded border border-[#a2a9b1] px-3 py-2 text-sm text-[#202122] focus:border-[#3366cc] focus:outline-none"
+            placeholder="Brief description of changes"
+          />
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3">
+          <button
+            type="button"
+            id="load-btn"
+            class="rounded border border-[#a2a9b1] bg-[#f8f9fa] px-4 py-2 text-sm font-semibold text-[#202122] hover:bg-white"
+          >
+            Load Current Content
+          </button>
+          <button
+            type="submit"
+            id="save-btn"
+            class="rounded bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b0080]"
+          >
+            Save & Auto-Approve
+          </button>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status-message" class="hidden rounded border p-4"></div>
+      </form>
+    </div>
+
+    <!-- All Pages List -->
+    <div class="mt-8 rounded border border-[#c8ccd1] bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-semibold text-[#202122] mb-4">All Pages ({allPages.length})</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-[#f8f9fa] border-b border-[#c8ccd1]">
+            <tr>
+              <th class="text-left p-3">Title</th>
+              <th class="text-left p-3">Slug</th>
+              <th class="text-left p-3">Status</th>
+              <th class="text-left p-3">Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allPages.map((entry: any) => (
+              <tr class="border-b border-[#eaecf0] hover:bg-[#f8f9fa]">
+                <td class="p-3">{entry.page.title}</td>
+                <td class="p-3 font-mono text-xs">{entry.page.slug}</td>
+                <td class="p-3">
+                  <span class={`px-2 py-1 rounded text-xs ${
+                    entry.page.status === 'published' ? 'bg-[#e8f4e8] text-[#008000]' :
+                    entry.page.status === 'draft' ? 'bg-[#fef6e7] text-[#f4a500]' :
+                    'bg-[#fee] text-[#d33f3f]'
+                  }`}>
+                    {entry.page.status}
+                  </span>
+                </td>
+                <td class="p-3 text-xs text-[#54595d]">
+                  {new Date(entry.page.updatedAt).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pageSelect = document.getElementById('page-select') as HTMLSelectElement;
+    const contentMarkdown = document.getElementById('content-markdown') as HTMLTextAreaElement;
+    const editSummary = document.getElementById('edit-summary') as HTMLInputElement;
+    const loadBtn = document.getElementById('load-btn') as HTMLButtonElement;
+    const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+    const statusMessage = document.getElementById('status-message') as HTMLDivElement;
+    const pageInfo = document.getElementById('page-info') as HTMLDivElement;
+
+    let currentPageId = '';
+    let currentSlug = '';
+
+    // Page selection change
+    pageSelect.addEventListener('change', () => {
+      const selectedOption = pageSelect.options[pageSelect.selectedIndex];
+      currentSlug = selectedOption.value;
+      currentPageId = selectedOption.dataset.pageId || '';
+
+      if (currentSlug) {
+        pageInfo.classList.remove('hidden');
+        document.getElementById('info-title')!.textContent = selectedOption.textContent?.split('(')[0].trim() || '';
+        document.getElementById('info-slug')!.textContent = currentSlug;
+        document.getElementById('info-status')!.textContent = selectedOption.textContent?.match(/\((.+)\)/)?.[1] || '';
+      } else {
+        pageInfo.classList.add('hidden');
+        contentMarkdown.value = '';
+      }
+    });
+
+    // Load current content
+    loadBtn.addEventListener('click', async () => {
+      if (!currentSlug) {
+        alert('Please select a page first');
+        return;
+      }
+
+      loadBtn.disabled = true;
+      loadBtn.textContent = 'Loading...';
+
+      try {
+        const response = await fetch(`/api/wiki/proposals?slug=${currentSlug}`);
+        const data = await response.json();
+
+        if (data.approvedContent) {
+          contentMarkdown.value = data.approvedContent;
+          showStatus('Content loaded successfully', 'success');
+        } else {
+          showStatus('No approved content found for this page', 'warning');
+        }
+      } catch (error) {
+        showStatus('Error loading content: ' + error, 'error');
+      } finally {
+        loadBtn.disabled = false;
+        loadBtn.textContent = 'Load Current Content';
+      }
+    });
+
+    // Save and auto-approve
+    document.getElementById('content-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!currentSlug || !contentMarkdown.value.trim()) {
+        alert('Please select a page and enter content');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        // Submit the revision
+        const response = await fetch('/api/wiki/proposals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            articleSlug: currentSlug,
+            details: contentMarkdown.value,
+            summary: editSummary.value || 'Content update via admin panel',
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Auto-approve the revision
+          const approveResponse = await fetch('/api/wiki/moderation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              revisionId: result.proposal.id,
+              action: 'approve',
+            }),
+          });
+
+          if (approveResponse.ok) {
+            showStatus('✅ Content saved and published successfully!', 'success');
+            editSummary.value = '';
+          } else {
+            showStatus('⚠️ Content saved but auto-approval failed. Please approve manually.', 'warning');
+          }
+        } else {
+          showStatus('❌ Error: ' + (result.message || 'Failed to save content'), 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Error: ' + error, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save & Auto-Approve';
+      }
+    });
+
+    function showStatus(message: string, type: 'success' | 'warning' | 'error') {
+      statusMessage.classList.remove('hidden');
+      statusMessage.className = 'rounded border p-4 ' + (
+        type === 'success' ? 'border-[#008000] bg-[#e8f4e8] text-[#008000]' :
+        type === 'warning' ? 'border-[#f4a500] bg-[#fef6e7] text-[#f4a500]' :
+        'border-[#d33f3f] bg-[#fee] text-[#d33f3f]'
+      );
+      statusMessage.textContent = message;
+
+      if (type === 'success') {
+        setTimeout(() => {
+          statusMessage.classList.add('hidden');
+        }, 5000);
+      }
+    }
+  </script>
+</AppLayout>
