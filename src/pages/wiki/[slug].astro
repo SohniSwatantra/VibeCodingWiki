@@ -8,6 +8,7 @@ import { EditingCallout } from '../../components/wiki/EditingCallout.tsx';
 import { EditProposalForm } from '../../components/wiki/EditProposalForm.tsx';
 import { ModerationPanel } from '../../components/wiki/ModerationPanel.tsx';
 import { runConvexQuery } from '../../lib/convex.server';
+import { filterAdminSummary } from '../../lib/utils/filterAdminSummary';
 
 export async function getStaticPaths() {
   const { articles } = await fetchDirectory();
@@ -22,12 +23,14 @@ const isAuthenticated = Boolean(Astro.locals.user);
 // Check if user has moderator or super_admin role
 let canModerate = false;
 let userRole = 'reader';
+let isSuperAdmin = false;
 if (Astro.locals.user) {
   const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
   if (convexUser) {
     const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
     const roleNames = userRoles?.map((r: any) => r.role) ?? [];
     canModerate = roleNames.includes('moderator') || roleNames.includes('super_admin');
+    isSuperAdmin = roleNames.includes('super_admin');
 
     // Get the highest priority role
     if (roleNames.includes('super_admin')) {
@@ -63,9 +66,12 @@ const formatSectionId = (heading: string) =>
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '');
+
+// Filter the summary for non-super-admins
+const filteredSummary = filterAdminSummary(articleData.summary, isSuperAdmin);
 ---
 
-<AppLayout title={articleData.title} description={articleData.summary}>
+<AppLayout title={articleData.title} description={filteredSummary}>
   <article class="grid gap-6 md:grid-cols-[3fr_1fr]">
     <div class="space-y-6">
       <header class="border-b border-[#a2a9b1] pb-3">
