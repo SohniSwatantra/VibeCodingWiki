@@ -537,6 +537,102 @@ export const autoApproveFirstRevision = mutation({
   },
 });
 
+/**
+ * Admin mutation to update page content and auto-approve
+ * This is used for admin/migration scripts only
+ * No authentication required - use with caution
+ */
+export const adminUpdatePageContent = mutation({
+  args: {
+    pageId: v.id('pages'),
+    content: v.string(),
+    summary: v.optional(v.string()),
+    sections: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          title: v.string(),
+          level: v.number(),
+          markdown: v.string(),
+        }),
+      ),
+    ),
+    tags: v.optional(v.array(v.string())),
+    timeline: v.optional(
+      v.array(
+        v.object({
+          year: v.union(v.string(), v.number()),
+          title: v.string(),
+          description: v.string(),
+        }),
+      ),
+    ),
+    relatedTopics: v.optional(v.array(v.string())),
+  },
+  handler: async (
+    ctx: any,
+    args: {
+      pageId: string;
+      content: string;
+      summary?: string;
+      sections?: Array<{ id: string; title: string; level: number; markdown: string }>;
+      tags?: string[];
+      timeline?: Array<{ year: string | number; title: string; description: string }>;
+      relatedTopics?: string[];
+    },
+  ) => {
+    const page = await ctx.db.get(args.pageId);
+    if (!page) {
+      throw new Error('Page not found.');
+    }
+
+    const timestamp = now();
+
+    // Get the latest revision number
+    const latest = await ctx.db
+      .query('pageRevisions')
+      .withIndex('by_pageId', (q: any) => q.eq('pageId', args.pageId))
+      .order('desc')
+      .first();
+
+    const revisionNumber = latest ? latest.revisionNumber + 1 : 1;
+
+    // Create a system user ID (we'll use the first user in the database)
+    const systemUser = await ctx.db.query('users').first();
+    if (!systemUser) {
+      throw new Error('No users found in database. Cannot create revision.');
+    }
+
+    // Create a new revision with the updated content
+    const revisionId = await ctx.db.insert('pageRevisions', {
+      pageId: args.pageId,
+      revisionNumber,
+      content: args.content,
+      summary: args.summary ?? 'Admin update',
+      sections: args.sections,
+      tags: args.tags,
+      timeline: args.timeline,
+      relatedTopics: args.relatedTopics,
+      createdBy: systemUser._id,
+      createdAt: timestamp,
+      status: 'approved',
+      approvedBy: systemUser._id,
+      approvedAt: timestamp,
+    });
+
+    // Update page to point to the newly approved revision
+    await ctx.db.patch(page._id, {
+      approvedRevisionId: revisionId,
+      status: 'published',
+      summary: args.summary ?? page.summary,
+      tags: args.tags ?? page.tags,
+      updatedAt: timestamp,
+    });
+
+    return { pageId: page._id, revisionId, revisionNumber };
+  },
+});
+
 export const getRecentApprovedChanges = query({
   args: {
     limit: v.optional(v.number()),
@@ -685,6 +781,51 @@ export const searchPages = query({
     );
 
     return results;
+  },
+});
+
+/**
+ * One-time schema fix mutation to add missing status and updatedAt fields
+ * Run this from CLI or Convex dashboard
+ */
+export const addMissingStatusField = mutation({
+  args: {},
+  handler: async (ctx: any) => {
+    const allPages = await ctx.db.query('pages').collect();
+
+    let fixed = 0;
+    const updates = [];
+
+    for (const page of allPages) {
+      const pageUpdates: any = {};
+
+      // @ts-ignore - checking for missing status field
+      if (!page.status) {
+        const status = page.approvedRevisionId ? 'published' : 'pending';
+        pageUpdates.status = status;
+        updates.push(`Added status '${status}' to page: ${page.slug} (${page.title})`);
+      }
+
+      // @ts-ignore - checking for missing updatedAt field
+      if (!page.updatedAt) {
+        pageUpdates.updatedAt = page.createdAt;
+        updates.push(`Added updatedAt to page: ${page.slug} (${page.title})`);
+      }
+
+      if (Object.keys(pageUpdates).length > 0) {
+        await ctx.db.patch(page._id, pageUpdates);
+        fixed++;
+      }
+    }
+
+    console.log(`Fixed ${fixed} pages with missing fields`);
+    updates.forEach(u => console.log(u));
+
+    return {
+      total: allPages.length,
+      fixed,
+      updates,
+    };
   },
 });
 

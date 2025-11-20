@@ -39,12 +39,14 @@ export default defineSchema({
     tags: v.optional(v.array(v.string())),
     createdBy: v.id('users'),
     createdAt: v.number(),
-    updatedAt: v.number(),
+    updatedAt: v.optional(v.number()),
     approvedRevisionId: v.optional(v.id('pageRevisions')),
-    status: v.union(v.literal('draft'), v.literal('pending'), v.literal('published'), v.literal('archived')),
+    latestRevisionId: v.optional(v.id('pageRevisions')),
+    status: v.optional(v.union(v.literal('draft'), v.literal('pending'), v.literal('published'), v.literal('archived'))),
     viewCount: v.optional(v.number()),
     popularityScore: v.optional(v.number()),
     lastScrapedAt: v.optional(v.number()),
+    pageType: v.optional(v.string()),
   })
     .index('by_slug', ['slug'])
     .index('by_namespace', ['namespace'])

@@ -1,8 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { QueryProvider } from '../providers/QueryProvider';
 import { RoleBadge } from '../wiki/RoleBadge';
+import { filterAdminSummary } from '../../lib/utils/filterAdminSummary';
 
-function RecentChangesContent() {
+interface RecentChangesContentProps {
+  isSuperAdmin: boolean;
+}
+
+function RecentChangesContent({ isSuperAdmin }: RecentChangesContentProps) {
   const { data: changes, isLoading, isError } = useQuery({
     queryKey: ['recent-changes'],
     queryFn: async () => {
@@ -38,19 +43,21 @@ function RecentChangesContent() {
 
   return (
     <div className="space-y-3">
-      {changes.map((change: any) => (
-        <article
-          key={change.revisionId}
-          className="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 hover:bg-white"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="flex-grow">
-              <h3 className="text-base font-semibold text-[#202122]">
-                <a href={`/wiki/${change.pageSlug}`} className="text-[#0645ad] hover:text-[#0b0080]">
-                  {change.pageTitle}
-                </a>
-              </h3>
-              <p className="mt-1 text-sm text-[#54595d]">{change.summary || '(No summary provided)'}</p>
+      {changes.map((change: any) => {
+        const filteredSummary = filterAdminSummary(change.summary, isSuperAdmin);
+        return (
+          <article
+            key={change.revisionId}
+            className="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 hover:bg-white"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="flex-grow">
+                <h3 className="text-base font-semibold text-[#202122]">
+                  <a href={`/wiki/${change.pageSlug}`} className="text-[#0645ad] hover:text-[#0b0080]">
+                    {change.pageTitle}
+                  </a>
+                </h3>
+                {filteredSummary && <p className="mt-1 text-sm text-[#54595d]">{filteredSummary}</p>}
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#72777d]">
                 <span>{change.authorName}</span>
                 {change.authorRole && <RoleBadge role={change.authorRole.replace('_', '-')} />}
@@ -72,15 +79,20 @@ function RecentChangesContent() {
             </a>
           </div>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-export function RecentChanges() {
+interface RecentChangesProps {
+  isSuperAdmin: boolean;
+}
+
+export function RecentChanges({ isSuperAdmin }: RecentChangesProps) {
   return (
     <QueryProvider>
-      <RecentChangesContent />
+      <RecentChangesContent isSuperAdmin={isSuperAdmin} />
     </QueryProvider>
   );
 }
