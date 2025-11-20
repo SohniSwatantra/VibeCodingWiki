@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { QueryProvider } from '../providers/QueryProvider';
@@ -33,8 +33,10 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
   const [summary, setSummary] = useState('');
   const [details, setDetails] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
-  const [isLoadingContent, setIsLoadingContent] = useState(true);
   const queryClient = useQueryClient();
+
+  // Track if we've already pre-filled the form to avoid overwriting user edits
+  const isInitializedRef = useRef(false);
 
   // Debug: Log authentication status
   useEffect(() => {
@@ -42,7 +44,7 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
   }, [isAuthenticated]);
 
   // Fetch current page content to pre-fill the editor
-  const { data: pageData, isLoading: isLoadingPageData } = useQuery({
+  const { data: pageData, isLoading: isLoadingPageData, refetch: refetchPageContent } = useQuery({
     queryKey: ['wiki-page-content', articleSlug],
     queryFn: async () => {
       console.log('[CONTENT] Fetching page content for slug:', articleSlug);
@@ -67,26 +69,12 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
 
   // Pre-fill the details field with current content when it loads
   useEffect(() => {
-    if (pageData !== undefined && isLoadingContent) {
-      console.log('[CONTENT] Pre-filling editor with content, length:', pageData.currentContent?.length || 0);
-      setDetails(pageData.currentContent || '');
-      setIsLoadingContent(false);
+    if (pageData?.currentContent && !isInitializedRef.current) {
+      console.log('[CONTENT] Pre-filling editor with content, length:', pageData.currentContent.length);
+      setDetails(pageData.currentContent);
+      isInitializedRef.current = true;
     }
-  }, [pageData, isLoadingContent]);
-
-  // Also stop loading if the query finishes (even with empty content)
-  useEffect(() => {
-    if (!isLoadingPageData && isLoadingContent) {
-      console.log('[CONTENT] Query finished, stopping loading state');
-      console.log('[CONTENT] Current details length:', details.length);
-      console.log('[CONTENT] Page data content length:', pageData?.currentContent?.length || 0);
-      // If details is still empty, force populate it
-      if (!details || details.length === 0) {
-        setDetails(pageData?.currentContent || '');
-      }
-      setIsLoadingContent(false);
-    }
-  }, [isLoadingPageData, isLoadingContent, details, pageData]);
+  }, [pageData]);
 
   const normalizeRole = (role: string | undefined): Proposal['role'] => {
     const formatted = role?.replace(/_/g, '-') ?? 'contributor';
@@ -212,6 +200,8 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
       setContributor('');
       setSummary('');
       setDetails('');
+      isInitializedRef.current = false; // Allow re-initialization on next load
+      refetchPageContent(); // Refresh base content too
       setNotice('Proposal captured! A moderator will review it shortly.');
       console.log('[MUTATION] onSuccess completed');
     },
@@ -266,7 +256,7 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
   }
 
   // Show loading state while content is being fetched
-  if (isLoadingContent || isLoadingPageData) {
+  if (isLoadingPageData) {
     return (
       <section id="propose-edit" className="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-[#202122]">Propose an edit</h2>
@@ -317,9 +307,23 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]" htmlFor="proposal-details">
-            Page content (edit directly)
-          </label>
+          <div className="flex justify-between items-center">
+            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]" htmlFor="proposal-details">
+              Page content (edit directly)
+            </label>
+            {(!details || details.length === 0) && (
+              <button 
+                type="button"
+                onClick={() => {
+                  isInitializedRef.current = false;
+                  refetchPageContent();
+                }}
+                className="text-xs text-[#3366cc] hover:underline"
+              >
+                Reload content
+              </button>
+            )}
+          </div>
           <textarea
             id="proposal-details"
             value={details}
@@ -393,4 +397,3 @@ export function EditProposalForm(props: EditProposalFormProps) {
     </QueryProvider>
   );
 }
-
