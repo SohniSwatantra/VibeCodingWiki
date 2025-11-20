@@ -1,7 +1,8 @@
 ---
 import AppLayout from '../../layouts/AppLayout.astro';
 import { ArticleDirectory } from '../../components/wiki/ArticleDirectory.tsx';
-import { getConvexUserByWorkOSId, runConvexQuery } from '../../lib/convex.server';
+import { getConvexUserByWorkOSId } from '../../lib/wiki/convexHelpers';
+import { runConvexQuery } from '../../lib/convex.server';
 
 // Check if user is super admin
 let isSuperAdmin = false;
