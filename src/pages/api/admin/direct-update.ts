@@ -35,8 +35,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       content,
       sections,
       timeline,
-      // Optional: generate a summary if none provided
-      summary: 'Content update',
+      // Don't set a summary - keep it empty
+      summary: body.summary || '',
     });
 
     return new Response(JSON.stringify({ success: true, result }), { status: 200 });

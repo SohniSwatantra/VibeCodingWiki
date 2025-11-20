@@ -608,7 +608,7 @@ export const adminUpdatePageContent = mutation({
       pageId: args.pageId,
       revisionNumber,
       content: args.content,
-      summary: args.summary ?? 'Admin update',
+      summary: args.summary ?? '',
       sections: args.sections,
       tags: args.tags,
       timeline: args.timeline,
