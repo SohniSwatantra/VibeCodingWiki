@@ -2,13 +2,18 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Article } from '../../types/wiki';
 import { QueryProvider } from '../providers/QueryProvider';
+import { filterAdminSummary } from '../../lib/utils/filterAdminSummary';
 
 type DirectoryPayload = {
   articles: Article[];
   source?: string;
 };
 
-function ArticleDirectoryContent() {
+interface ArticleDirectoryContentProps {
+  isSuperAdmin: boolean;
+}
+
+function ArticleDirectoryContent({ isSuperAdmin }: ArticleDirectoryContentProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { data, isLoading, isError } = useQuery<DirectoryPayload>({
     queryKey: ['wiki-directory'],
@@ -58,28 +63,35 @@ function ArticleDirectoryContent() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        {filtered.map((article) => (
-          <article key={article.slug} className="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 shadow-sm">
-            <h2 className="text-base font-semibold text-[#202122]">
-              <a className="text-[#0645ad]" href={`/wiki/${article.slug}`}>
-                {article.title}
-              </a>
-            </h2>
-            <p className="mt-2 text-sm text-[#54595d]">{article.summary}</p>
-            <p className="mt-3 text-xs text-[#72777d]">
-              Categories: {article.categories.join(', ')} · Tags: {article.tags.join(', ')}
-            </p>
-          </article>
-        ))}
+        {filtered.map((article) => {
+          const filteredSummary = filterAdminSummary(article.summary, isSuperAdmin);
+          return (
+            <article key={article.slug} className="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4 shadow-sm">
+              <h2 className="text-base font-semibold text-[#202122]">
+                <a className="text-[#0645ad]" href={`/wiki/${article.slug}`}>
+                  {article.title}
+                </a>
+              </h2>
+              {filteredSummary && <p className="mt-2 text-sm text-[#54595d]">{filteredSummary}</p>}
+              <p className="mt-3 text-xs text-[#72777d]">
+                Categories: {article.categories.join(', ')} · Tags: {article.tags.join(', ')}
+              </p>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
 }
 
-export function ArticleDirectory() {
+interface ArticleDirectoryProps {
+  isSuperAdmin: boolean;
+}
+
+export function ArticleDirectory({ isSuperAdmin }: ArticleDirectoryProps) {
   return (
     <QueryProvider>
-      <ArticleDirectoryContent />
+      <ArticleDirectoryContent isSuperAdmin={isSuperAdmin} />
     </QueryProvider>
   );
 }
