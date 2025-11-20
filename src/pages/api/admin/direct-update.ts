@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       sections,
       timeline,
       // Optional: generate a summary if none provided
-      summary: 'Direct update via Super Admin Editor',
+      summary: 'Content update',
     });
 
     return new Response(JSON.stringify({ success: true, result }), { status: 200 });
