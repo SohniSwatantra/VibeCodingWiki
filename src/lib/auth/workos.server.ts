@@ -57,7 +57,7 @@ export function shouldUseSecureCookies(url: string): boolean {
   }
 }
 
-export async function getUserFromRequest(request: Request) {
+export async function getUserFromRequest(request: Request): Promise<{ user: any; refreshedSession?: string } | undefined> {
   if (!cookiePassword || !workos) {
     return undefined;
   }
@@ -74,19 +74,38 @@ export async function getUserFromRequest(request: Request) {
       cookiePassword,
     });
 
-    // Authenticate the session without timeout - let WorkOS handle it
-    const auth = await session.authenticate();
+    // Authenticate with ensureActive to auto-refresh if needed
+    const auth = await session.authenticate({ ensureActiveSession: true });
     if (!auth.authenticated || !auth.user) {
       return undefined;
     }
 
     const { user } = auth;
-    return {
+    const userInfo = {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       profilePictureUrl: user.profilePictureUrl,
+    };
+
+    // Check if session was refreshed and seal the new session
+    let refreshedSession: string | undefined;
+    if (auth.sessionId && auth.sessionId !== session.sessionId) {
+      try {
+        const newSession = await workos.userManagement.getSession({ sessionId: auth.sessionId });
+        refreshedSession = workos.userManagement.sealSession({
+          sessionData: newSession,
+          cookiePassword,
+        });
+      } catch (error) {
+        console.error('Failed to seal refreshed session', error);
+      }
+    }
+
+    return {
+      user: userInfo,
+      refreshedSession,
     };
   } catch (error) {
     console.error('Failed to load WorkOS session', error);
