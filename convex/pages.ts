@@ -829,3 +829,70 @@ export const addMissingStatusField = mutation({
   },
 });
 
+/**
+ * Cleanup mutation to remove admin-related summary text from database
+ */
+export const cleanupAdminSummaries = mutation({
+  args: {},
+  handler: async (ctx: any) => {
+    const ADMIN_KEYWORDS = [
+      'content update via admin panel',
+      'admin update',
+      'content update',
+      'via admin',
+      'super admin',
+      'direct update',
+    ];
+
+    const pages = await ctx.db.query('pages').collect();
+    const revisions = await ctx.db.query('pageRevisions').collect();
+
+    let pagesUpdated = 0;
+    let revisionsUpdated = 0;
+    const updatedPages: string[] = [];
+
+    // Update pages
+    for (const page of pages) {
+      if (page.summary) {
+        const lowerSummary = page.summary.toLowerCase();
+        const hasAdminText = ADMIN_KEYWORDS.some(keyword =>
+          lowerSummary.includes(keyword)
+        );
+
+        if (hasAdminText) {
+          await ctx.db.patch(page._id, { summary: '' });
+          updatedPages.push(`${page.slug} (was: "${page.summary}")`);
+          pagesUpdated++;
+        }
+      }
+    }
+
+    // Update revisions
+    for (const revision of revisions) {
+      if (revision.summary) {
+        const lowerSummary = revision.summary.toLowerCase();
+        const hasAdminText = ADMIN_KEYWORDS.some(keyword =>
+          lowerSummary.includes(keyword)
+        );
+
+        if (hasAdminText) {
+          await ctx.db.patch(revision._id, { summary: '' });
+          revisionsUpdated++;
+        }
+      }
+    }
+
+    console.log(`Cleaned up ${pagesUpdated} pages and ${revisionsUpdated} revisions`);
+    updatedPages.forEach(p => console.log(p));
+
+    return {
+      totalPages: pages.length,
+      pagesUpdated,
+      updatedPages,
+      totalRevisions: revisions.length,
+      revisionsUpdated,
+      message: `Cleaned up ${pagesUpdated} pages and ${revisionsUpdated} revisions`,
+    };
+  },
+});
+
