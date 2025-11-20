@@ -1,9 +1,21 @@
 ---
 import '../styles/global.css';
 import { SponsorshipBanner } from '../components/app/SponsorshipBanner.tsx';
+import { getConvexUserByWorkOSId } from '../lib/wiki/convexHelpers';
+import { runConvexQuery } from '../lib/convex.server';
 
 const { title = 'VibeCoding Wiki', description = 'A collaborative knowledge base for Vibe Coders.' } = Astro.props;
 const currentUser = Astro.locals.user;
+
+let isSuperAdmin = false;
+if (currentUser) {
+  const convexUser = await getConvexUserByWorkOSId(currentUser.id);
+  if (convexUser) {
+    const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+    const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+    isSuperAdmin = roleNames.includes('super_admin');
+  }
+}
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -49,6 +61,11 @@ const currentUser = Astro.locals.user;
           <nav class="mt-4 flex flex-wrap gap-4 text-sm text-[#202122]">
             <a class="font-semibold text-[#202122] hover:text-[#0b0080]" href="/">Main page</a>
             <a class="hover:text-[#0b0080]" href="/wiki">All pages</a>
+            {isSuperAdmin && (
+               <a class="font-bold text-[#d33f3f] hover:text-[#b32424]" href="/admin/editor">
+                 Super Admin Editor
+               </a>
+            )}
             <a class="hover:text-[#0b0080]" href="/submit-app">Submit an APP</a>
             <a class="hover:text-[#0b0080]" href="/newsletter">VibeCoding Newsletter</a>
             <a class="hover:text-[#0b0080]" href="/users">Contributors</a>
@@ -87,4 +104,3 @@ const currentUser = Astro.locals.user;
     <SponsorshipBanner client:load />
   </body>
 </html>
-
