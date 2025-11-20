@@ -1,0 +1,199 @@
+---
+export const prerender = false;
+import AppLayout from '../../layouts/AppLayout.astro';
+import { runConvexQuery } from '../../lib/convex.server';
+
+// Check authentication and super_admin role
+const isAuthenticated = Boolean(Astro.locals.user);
+if (!isAuthenticated) {
+  return Astro.redirect('/login?next=/admin/editor');
+}
+
+// Get user roles
+const { getConvexUserByWorkOSId } = await import('../../lib/wiki/convexHelpers');
+const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+if (!convexUser) {
+  return new Response('User not found in database', { status: 403 });
+}
+
+const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+const isSuperAdmin = roleNames.includes('super_admin');
+
+if (!isSuperAdmin) {
+  return new Response('Access denied. Super admin role required.', { status: 403 });
+}
+
+// Fetch all pages
+const allPages = await runConvexQuery<any[]>('pages:listPages', { limit: 200 }) ?? [];
+---
+
+<AppLayout title="Super Admin Editor" description="Direct database editor">
+  <div class="max-w-5xl mx-auto py-8 px-4">
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">✏️ Direct Database Editor</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Super Admin Mode: Changes save directly to the database and publish instantly. No moderation queue.
+      </p>
+    </header>
+
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+      <div class="flex gap-4 mb-6">
+        <div class="flex-1">
+          <label for="page-select" class="block text-sm font-medium text-gray-700 mb-1">Select Page</label>
+          <select id="page-select" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2 border">
+            <option value="">-- Choose a page to edit --</option>
+            {allPages.map((entry: any) => (
+              <option value={entry.page._id} data-slug={entry.page.slug}>
+                {entry.page.title} (/{entry.page.slug})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="refresh-btn" class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">
+            🔄 Refresh List
+          </button>
+        </div>
+      </div>
+
+      <div id="editor-container" class="hidden">
+        <div class="mb-4">
+          <label for="content-editor" class="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
+          <textarea
+            id="content-editor"
+            rows="20"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-mono text-sm p-3 border"
+            placeholder="Start typing..."
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md border border-gray-100">
+          <div class="text-xs text-gray-500">
+            <span id="status-indicator" class="inline-block w-2 h-2 rounded-full bg-gray-400 mr-2"></span>
+            <span id="status-text">Ready</span>
+          </div>
+          <button
+            id="save-btn"
+            class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Save & Publish
+          </button>
+        </div>
+      </div>
+
+      <div id="empty-state" class="text-center py-12 text-gray-500">
+        Select a page above to start editing directly.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { sectionsToMarkdown, markdownToSections } from '../../lib/markdown/parsePageContent';
+
+    const pageSelect = document.getElementById('page-select') as HTMLSelectElement;
+    const editorContainer = document.getElementById('editor-container');
+    const emptyState = document.getElementById('empty-state');
+    const contentEditor = document.getElementById('content-editor') as HTMLTextAreaElement;
+    const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+    const statusText = document.getElementById('status-text') as HTMLSpanElement;
+    const statusIndicator = document.getElementById('status-indicator') as HTMLSpanElement;
+
+    let currentPageId = '';
+    let currentSlug = '';
+
+    // Load content when page is selected
+    pageSelect.addEventListener('change', async () => {
+      const pageId = pageSelect.value;
+      const option = pageSelect.options[pageSelect.selectedIndex];
+      currentSlug = option.dataset.slug || '';
+      currentPageId = pageId;
+
+      if (!pageId) {
+        editorContainer.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      updateStatus('Loading...', 'loading');
+      editorContainer.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      contentEditor.value = 'Loading content...';
+      contentEditor.disabled = true;
+      saveBtn.disabled = true;
+
+      try {
+        const response = await fetch(`/api/wiki/proposals?slug=${currentSlug}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          contentEditor.value = data.approvedContent || '';
+          updateStatus('Loaded', 'ready');
+        } else {
+          throw new Error(data.message || 'Failed to load content');
+        }
+      } catch (error) {
+        console.error(error);
+        contentEditor.value = '';
+        updateStatus('Error loading content', 'error');
+        alert('Failed to load page content. Check console for details.');
+      } finally {
+        contentEditor.disabled = false;
+        saveBtn.disabled = false;
+      }
+    });
+
+    // Save content directly
+    saveBtn.addEventListener('click', async () => {
+      if (!currentPageId) return;
+
+      const content = contentEditor.value;
+      updateStatus('Saving...', 'loading');
+      saveBtn.disabled = true;
+
+      try {
+        // Parse markdown into sections structure
+        const parsed = markdownToSections(content);
+
+        // Call the new admin mutation via a proxy endpoint (we need to add this endpoint or reuse an existing one)
+        // Since we can't call Convex directly from client easily without Auth config, we'll use a server endpoint proxy.
+        // We'll create a quick API route for this action.
+        
+        const response = await fetch('/api/admin/direct-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pageId: currentPageId,
+            content: parsed.content,
+            sections: parsed.sections,
+            timeline: parsed.timeline
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          updateStatus('Saved & Published!', 'success');
+          setTimeout(() => updateStatus('Ready', 'ready'), 3000);
+        } else {
+          throw new Error(result.message || 'Failed to save');
+        }
+      } catch (error) {
+        console.error(error);
+        updateStatus('Error saving', 'error');
+        alert('Failed to save changes: ' + error);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    function updateStatus(text: string, state: 'loading' | 'success' | 'error' | 'ready') {
+      statusText.textContent = text;
+      statusIndicator.className = 'inline-block w-2 h-2 rounded-full mr-2 ' + 
+        (state === 'loading' ? 'bg-yellow-400 animate-pulse' : 
+         state === 'success' ? 'bg-green-500' : 
+         state === 'error' ? 'bg-red-500' : 'bg-gray-400');
+    }
+  </script>
+</AppLayout>
+
