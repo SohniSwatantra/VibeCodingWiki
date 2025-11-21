@@ -731,43 +731,29 @@ export const searchPages = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx: any, args: { query: string; limit?: number }) => {
-    const searchQuery = args.query.toLowerCase().trim();
+    const searchQuery = args.query.trim();
     const limit = args.limit ?? 20;
 
     if (!searchQuery) {
       return [];
     }
 
-    // Get all pages (not just published - include pending with approved revisions)
-    const allPages = await ctx.db.query('pages').collect();
+    const [titleMatches, summaryMatches] = await Promise.all([
+      ctx.db
+        .query('pages')
+        .withSearchIndex('by_title', (q: any) => q.search('title', searchQuery))
+        .take(limit),
+      ctx.db
+        .query('pages')
+        .withSearchIndex('by_summary', (q: any) => q.search('summary', searchQuery))
+        .take(limit),
+    ]);
 
-    // Filter pages based on search query
-    const matchingPages = allPages.filter((page: any) => {
-      const titleMatch = page.title.toLowerCase().includes(searchQuery);
-      const summaryMatch = page.summary?.toLowerCase().includes(searchQuery);
-      const tagMatch = page.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery));
+    const allMatches = [...titleMatches, ...summaryMatches];
+    const uniqueMatches = Array.from(new Map(allMatches.map((page) => [page._id, page])).values());
 
-      return titleMatch || summaryMatch || tagMatch;
-    });
-
-    // Sort by relevance (title matches first, then published status)
-    const sortedPages = matchingPages.sort((a: any, b: any) => {
-      // Prioritize published pages
-      if (a.status === 'published' && b.status !== 'published') return -1;
-      if (a.status !== 'published' && b.status === 'published') return 1;
-
-      // Then prioritize title matches
-      const aTitleMatch = a.title.toLowerCase().includes(searchQuery);
-      const bTitleMatch = b.title.toLowerCase().includes(searchQuery);
-
-      if (aTitleMatch && !bTitleMatch) return -1;
-      if (!aTitleMatch && bTitleMatch) return 1;
-      return 0;
-    });
-
-    // Get approved revisions and limit results
     const results = await Promise.all(
-      sortedPages.slice(0, limit).map(async (page: any) => {
+      uniqueMatches.slice(0, limit).map(async (page: any) => {
         const approvedRevision = page.approvedRevisionId
           ? await ctx.db.get(page.approvedRevisionId)
           : null;
