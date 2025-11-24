@@ -58,7 +58,14 @@ function loadJson<T>(relativePath: string): Promise<T> {
 
 function splitSections(markdown: string): HackathonSectionMap {
   const startIndex = markdown.indexOf('## Sponsored by');
-  const relevant = startIndex >= 0 ? markdown.slice(startIndex) : markdown;
+  let relevant = startIndex >= 0 ? markdown.slice(startIndex) : markdown;
+  
+  // Remove footer content that starts with "Start building" section
+  const footerIndex = relevant.indexOf('Start building');
+  if (footerIndex >= 0) {
+    relevant = relevant.slice(0, footerIndex);
+  }
+  
   const parts = relevant.split('\n## ');
 
   const sections: HackathonSectionMap = {};
