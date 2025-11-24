@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-11-24T17:31:53.038Z",
+  "lastUpdated": "2025-11-24T17:40:47.238Z",
   "sponsors": [
     {
       "label": "TanStack Start - Full-stack Framework powered by TanStack Router for React and Solid",
@@ -43,23 +43,7 @@
     "location": "Online",
     "prizePool": "$640kin cash, prizes, and credits"
   },
-  "howToParticipate": [
-    {
-      "step": 1,
-      "title": "Build requirements",
-      "description": "Create a new app that starts on or after **October 29th** using TanStack Start, Convex, CodeRabbit, Firecrawl, Netlify, Autumn, Sentry, and Cloudflare."
-    },
-    {
-      "step": 2,
-      "title": "Share",
-      "description": "Share your app and tag us on Twitter (X) or LinkedIn [@tan\\_stack](https://x.com/tan_stack), [@convex](https://x.com/convex), [@coderabbitai](https://x.com/coderabbitai), [@firecrawl\\_dev](https://x.com/firecrawl_dev), [@netlify](https://x.com/netlify), [@autumnpricing](https://x.com/autumnpricing), [@sentry](https://x.com/sentry), [@cloudflare](https://x.com/cloudflare)."
-    },
-    {
-      "step": 3,
-      "title": "Submit",
-      "description": "Submit your app with a video demo to [Vibe Apps](https://vibeapps.dev/judging/tanstack-start-hackathon/submit) directory and select the **tanstackstart** tag before 12 PM PT on November 17th. No localhost submissions are accepted."
-    }
-  ],
+  "howToParticipate": [],
   "prizes": [
     {
       "title": "Overall Winner",
@@ -486,6 +470,23 @@
         "Cloudflare"
       ],
       "author": "Ahmad Nurfadilah"
+    },
+    {
+      "name": "VibeCodingWiki",
+      "url": "https://vibecodingwiki.com",
+      "description": "A collaborative knowledge base for Vibe Coders. Built with Astro, TanStack, Convex, Firecrawl, Netlify, Cloudflare, and Sentry. Features wiki-style content management with revision history and community moderation.",
+      "tags": [
+        "TanStack",
+        "convex",
+        "Firecrawl",
+        "Netlify",
+        "Cloudflare",
+        "Sentry",
+        "Astro",
+        "tanstackstart"
+      ],
+      "author": "Swatantra Sohni",
+      "repoUrl": "https://github.com/SohniSwatantra/VibeCodingWiki"
     }
   ]
 }

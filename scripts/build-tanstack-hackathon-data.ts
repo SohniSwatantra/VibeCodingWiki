@@ -307,17 +307,33 @@ async function buildHackathonData() {
   const appsRaw = await loadJson<any>('data/firecrawl/tanstack-start-apps.json');
 
   const sections = splitSections(hackathonRaw.data.markdown);
+  
+  // Parse apps from markdown
+  const parsedApps = parseApps(appsRaw.data.markdown);
+  
+  // Add VibeCodingwiki.com manually
+  const vibecodingwikiApp: AppEntry = {
+    name: 'VibeCodingWiki',
+    url: 'https://vibecodingwiki.com',
+    description: 'A collaborative knowledge base for Vibe Coders. Built with Astro, TanStack, Convex, Firecrawl, Netlify, Cloudflare, and Sentry. Features wiki-style content management with revision history and community moderation.',
+    tags: ['TanStack', 'convex', 'Firecrawl', 'Netlify', 'Cloudflare', 'Sentry', 'Astro', 'tanstackstart'],
+    author: 'Swatantra Sohni',
+    repoUrl: 'https://github.com/SohniSwatantra/VibeCodingWiki',
+  };
+  
+  // Combine apps with VibeCodingwiki at the end
+  const allApps = [...parsedApps, vibecodingwikiApp];
 
   const data: HackathonData = {
     lastUpdated: new Date().toISOString(),
     sponsors: parseSponsorLinks(sections['Sponsored by'] ?? ''),
     howItWorks: parseHowItWorks(sections['How it works'] ?? ''),
-    howToParticipate: parseSteps(sections['How to participate'] ?? ''),
+    howToParticipate: [], // Removed section
     prizes: parsePrizeTiers(sections['Prizes'] ?? ''),
     resources: parseResourceLinks(sections['Resources'] ?? ''),
     judges: parseJudges(sections['Meet the Judges'] ?? ''),
     rulesMarkdown: sections['Rules & Guidelines'] ?? '',
-    apps: parseApps(appsRaw.data.markdown),
+    apps: allApps,
   };
 
   const outputPath = path.resolve('src/data/tanstack-hackathon.json');

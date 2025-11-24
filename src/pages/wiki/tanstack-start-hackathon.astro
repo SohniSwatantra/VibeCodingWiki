@@ -84,19 +84,6 @@ const formattedUpdated = new Date(lastUpdated).toLocaleString();
     </section>
 
     <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
-      <h2 class="text-xl font-normal text-[#202122]">How to participate</h2>
-      <ol class="mt-3 space-y-4 text-sm text-[#202122]">
-        {howToParticipate.map((step) => (
-          <li class="rounded border border-[#eaecf0] bg-[#f8f9fa] p-3">
-            <p class="text-xs uppercase tracking-[0.3em] text-[#72777d]">Step {step.step}</p>
-            <h3 class="text-base font-semibold text-[#202122]">{step.title}</h3>
-            <p class="mt-1" set:html={linkify(step.description)} />
-          </li>
-        ))}
-      </ol>
-    </section>
-
-    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
       <h2 class="text-xl font-normal text-[#202122]">Prizes</h2>
       <div class="mt-4 grid gap-4 md:grid-cols-3">
         {prizes.map((tier) => (
@@ -108,6 +95,18 @@ const formattedUpdated = new Date(lastUpdated).toLocaleString();
               ))}
             </ul>
           </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Meet the judges</h2>
+      <div class="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-4">
+        {judges.map((judge) => (
+          <a class="rounded border border-[#d5d5d5] bg-white p-3 text-sm text-[#0645ad]" href={judge.url} target="_blank"
+            rel="noopener noreferrer">
+            {judge.name}
+          </a>
         ))}
       </div>
     </section>
@@ -145,6 +144,15 @@ const formattedUpdated = new Date(lastUpdated).toLocaleString();
     </section>
 
     <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Rules &amp; guidelines</h2>
+      <div class="mt-3 space-y-3 text-sm text-[#202122]">
+        {ruleParagraphs.map((paragraph) => (
+          <p set:html={paragraph} />
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
       <h2 class="text-xl font-normal text-[#202122]">Resources</h2>
       <ul class="mt-3 space-y-2 text-sm text-[#0645ad]">
         {resources.map((resource) => (
@@ -153,27 +161,6 @@ const formattedUpdated = new Date(lastUpdated).toLocaleString();
           </li>
         ))}
       </ul>
-    </section>
-
-    <section class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-5 shadow-sm">
-      <h2 class="text-xl font-normal text-[#202122]">Meet the judges</h2>
-      <div class="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-4">
-        {judges.map((judge) => (
-          <a class="rounded border border-[#d5d5d5] bg-white p-3 text-sm text-[#0645ad]" href={judge.url} target="_blank"
-            rel="noopener noreferrer">
-            {judge.name}
-          </a>
-        ))}
-      </div>
-    </section>
-
-    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
-      <h2 class="text-xl font-normal text-[#202122]">Rules &amp; guidelines</h2>
-      <div class="mt-3 space-y-3 text-sm text-[#202122]">
-        {ruleParagraphs.map((paragraph) => (
-          <p set:html={paragraph} />
-        ))}
-      </div>
     </section>
 
     <section class="rounded border border-[#c8ccd1] bg-[#fef6e7] p-4 text-xs text-[#555]">
