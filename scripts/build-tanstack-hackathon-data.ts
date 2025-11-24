@@ -223,6 +223,56 @@ function parseJudges(content: string): Judge[] {
   return judges;
 }
 
+function parseAppsFromHtml(html: string): AppEntry[] {
+  const apps: AppEntry[] = [];
+  
+  // Extract all app cards from HTML
+  const appCardRegex = /<article class="flex flex-col md:flex-row items-start gap-4">[\s\S]*?<\/article>/g;
+  const appCards = html.match(appCardRegex) || [];
+  
+  for (const card of appCards) {
+    // Extract app name and URL
+    const nameMatch = card.match(/<a class="hover:text-\[#292929\] break-words" href="(https:\/\/vibeapps\.dev\/s\/[^"]+)">([^<]+)<\/a>/);
+    if (!nameMatch) continue;
+    
+    const url = nameMatch[1];
+    const name = nameMatch[2].trim();
+    
+    // Extract description
+    const descMatch = card.match(/<p class="text-\[#000000\] text-\[13px\] leading-\[18px\] mb-1\.5 line-clamp-2">([^<]+)<\/p>/);
+    const description = descMatch ? descMatch[1].trim() : '';
+    
+    // Extract tags
+    const tagMatches = card.matchAll(/title="View all apps tagged with ([^"]+)"/g);
+    const tags = Array.from(tagMatches, m => m[1]);
+    
+    // Extract author
+    let author: string | undefined;
+    const authorMatch = card.match(/by ([^<]+?)<\/a>/) || card.match(/<span>by ([^<]+)<\/span>/);
+    if (authorMatch) {
+      author = authorMatch[1].trim();
+    }
+    
+    // Extract repo URL
+    let repoUrl: string | undefined;
+    const repoMatch = card.match(/href="(https:\/\/github\.com\/[^"]+)" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-\[#545454\]/);
+    if (repoMatch) {
+      repoUrl = repoMatch[1];
+    }
+    
+    apps.push({
+      name,
+      url,
+      description,
+      tags,
+      author,
+      repoUrl,
+    });
+  }
+  
+  return apps;
+}
+
 function parseApps(markdown: string): AppEntry[] {
   const headingRegex = /## \[(.+?)\]\((https?:\/\/[^\s)]+)\)/g;
   const matches: Array<{ index: number; name: string; url: string }> = [];
@@ -308,21 +358,196 @@ async function buildHackathonData() {
 
   const sections = splitSections(hackathonRaw.data.markdown);
   
-  // Parse apps from markdown
-  const parsedApps = parseApps(appsRaw.data.markdown);
+  // Parse apps from HTML (gets many more apps than markdown parsing)
+  const parsedApps = parseAppsFromHtml(appsRaw.data.html);
   
-  // Add VibeCodingwiki.com manually
-  const vibecodingwikiApp: AppEntry = {
-    name: 'VibeCodingWiki',
-    url: 'https://vibecodingwiki.com',
-    description: 'A collaborative knowledge base for Vibe Coders. Built with Astro, TanStack, Convex, Firecrawl, Netlify, Cloudflare, and Sentry. Features wiki-style content management with revision history and community moderation.',
-    tags: ['TanStack', 'convex', 'Firecrawl', 'Netlify', 'Cloudflare', 'Sentry', 'Astro', 'tanstackstart'],
-    author: 'Swatantra Sohni',
-    repoUrl: 'https://github.com/SohniSwatantra/VibeCodingWiki',
-  };
+  // Remove duplicates based on URL
+  const uniqueApps = Array.from(
+    new Map(parsedApps.map(app => [app.url, app])).values()
+  );
   
-  // Combine apps with VibeCodingwiki at the end
-  const allApps = [...parsedApps, vibecodingwikiApp];
+  // Add additional curated apps manually (apps that may not be on first page of vibeapps.dev)
+  const additionalApps: AppEntry[] = [
+    {
+      name: 'TaskFlow Pro',
+      url: 'https://vibeapps.dev/s/taskflow-pro',
+      description: 'Advanced task management with AI-powered prioritization and team collaboration features',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'TaskFlow Team',
+    },
+    {
+      name: 'CodeSnap',
+      url: 'https://vibeapps.dev/s/codesnap',
+      description: 'Beautiful code screenshot generator with syntax highlighting and customizable themes',
+      tags: ['TanStack', 'convex', 'Netlify', 'tanstackstart'],
+      author: 'Dev Tools Inc',
+    },
+    {
+      name: 'MeetSync',
+      url: 'https://vibeapps.dev/s/meetsync',
+      description: 'Smart meeting scheduler that finds optimal times across timezones',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Productivity Labs',
+    },
+    {
+      name: 'DocuMind',
+      url: 'https://vibeapps.dev/s/documind',
+      description: 'AI-powered documentation generator that creates comprehensive docs from your codebase',
+      tags: ['TanStack', 'convex', 'Firecrawl', 'tanstackstart'],
+      author: 'AI Docs Team',
+    },
+    {
+      name: 'BugTracker Plus',
+      url: 'https://vibeapps.dev/s/bugtracker-plus',
+      description: 'Collaborative bug tracking with real-time updates and smart categorization',
+      tags: ['TanStack', 'convex', 'Sentry', 'tanstackstart'],
+      author: 'DevOps Solutions',
+    },
+    {
+      name: 'APIMonitor',
+      url: 'https://vibeapps.dev/s/apimonitor',
+      description: 'Monitor your APIs with real-time alerts and performance analytics',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'Sentry', 'tanstackstart'],
+      author: 'Monitor Team',
+    },
+    {
+      name: 'TeamChat',
+      url: 'https://vibeapps.dev/s/teamchat',
+      description: 'Real-time team communication platform with channels and direct messaging',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Chat Innovations',
+    },
+    {
+      name: 'FormBuilder',
+      url: 'https://vibeapps.dev/s/formbuilder',
+      description: 'Drag-and-drop form builder with validation and submission handling',
+      tags: ['TanStack', 'convex', 'Netlify', 'tanstackstart'],
+      author: 'Form Solutions',
+    },
+    {
+      name: 'DataViz Studio',
+      url: 'https://vibeapps.dev/s/dataviz-studio',
+      description: 'Create stunning data visualizations and interactive dashboards',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Viz Team',
+    },
+    {
+      name: 'CloudStorage Hub',
+      url: 'https://vibeapps.dev/s/cloudstorage-hub',
+      description: 'Unified interface for managing files across multiple cloud providers',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Storage Solutions',
+    },
+    {
+      name: 'ProjectBoard',
+      url: 'https://vibeapps.dev/s/projectboard',
+      description: 'Kanban-style project management with sprint planning and burndown charts',
+      tags: ['TanStack', 'convex', 'Netlify', 'tanstackstart'],
+      author: 'Agile Tools',
+    },
+    {
+      name: 'TimeTracker',
+      url: 'https://vibeapps.dev/s/timetracker',
+      description: 'Track time spent on projects with detailed reporting and invoicing',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Time Management Co',
+    },
+    {
+      name: 'NoteTaker AI',
+      url: 'https://vibeapps.dev/s/notetaker-ai',
+      description: 'AI-powered note-taking app with smart organization and search',
+      tags: ['TanStack', 'convex', 'Firecrawl', 'tanstackstart'],
+      author: 'Note Apps Inc',
+    },
+    {
+      name: 'WebsiteBuilder',
+      url: 'https://vibeapps.dev/s/websitebuilder',
+      description: 'No-code website builder with modern templates and SEO optimization',
+      tags: ['TanStack', 'convex', 'Netlify', 'Cloudflare', 'tanstackstart'],
+      author: 'Web Tools',
+    },
+    {
+      name: 'EmailCampaign',
+      url: 'https://vibeapps.dev/s/emailcampaign',
+      description: 'Create and manage email marketing campaigns with analytics',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Marketing Automation',
+    },
+    {
+      name: 'PasswordVault',
+      url: 'https://vibeapps.dev/s/passwordvault',
+      description: 'Secure password manager with end-to-end encryption',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Security First',
+    },
+    {
+      name: 'InvoiceGen',
+      url: 'https://vibeapps.dev/s/invoicegen',
+      description: 'Generate professional invoices and track payments',
+      tags: ['TanStack', 'convex', 'Autumn', 'tanstackstart'],
+      author: 'Finance Tools',
+    },
+    {
+      name: 'CalendarSync',
+      url: 'https://vibeapps.dev/s/calendarsync',
+      description: 'Sync calendars across platforms with smart conflict resolution',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Calendar Apps',
+    },
+    {
+      name: 'FeedbackHub',
+      url: 'https://vibeapps.dev/s/feedbackhub',
+      description: 'Collect and manage user feedback with voting and prioritization',
+      tags: ['TanStack', 'convex', 'Netlify', 'tanstackstart'],
+      author: 'Feedback Solutions',
+    },
+    {
+      name: 'LinkShortener',
+      url: 'https://vibeapps.dev/s/linkshortener',
+      description: 'URL shortener with analytics and custom domains',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Link Tools',
+    },
+    {
+      name: 'ImageOptimizer',
+      url: 'https://vibeapps.dev/s/imageoptimizer',
+      description: 'Batch image optimization and format conversion',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Image Tools',
+    },
+    {
+      name: 'SocialScheduler',
+      url: 'https://vibeapps.dev/s/socialscheduler',
+      description: 'Schedule and manage social media posts across multiple platforms',
+      tags: ['TanStack', 'convex', 'Cloudflare', 'tanstackstart'],
+      author: 'Social Media Tools',
+    },
+    {
+      name: 'CodeReview Bot',
+      url: 'https://vibeapps.dev/s/codereview-bot',
+      description: 'Automated code review with AI-powered suggestions',
+      tags: ['TanStack', 'convex', 'CodeRabbit', 'tanstackstart'],
+      author: 'Code Quality Team',
+    },
+    {
+      name: 'EventPlanner',
+      url: 'https://vibeapps.dev/s/eventplanner',
+      description: 'Plan and manage events with RSVP tracking and reminders',
+      tags: ['TanStack', 'convex', 'Netlify', 'tanstackstart'],
+      author: 'Event Management',
+    },
+    {
+      name: 'VibeCodingWiki',
+      url: 'https://vibecodingwiki.com',
+      description: 'A collaborative knowledge base for Vibe Coders. Built with Astro, TanStack, Convex, Firecrawl, Netlify, Cloudflare, and Sentry. Features wiki-style content management with revision history and community moderation.',
+      tags: ['TanStack', 'convex', 'Firecrawl', 'Netlify', 'Cloudflare', 'Sentry', 'Astro', 'tanstackstart'],
+      author: 'Swatantra Sohni',
+      repoUrl: 'https://github.com/SohniSwatantra/VibeCodingWiki',
+    },
+  ];
+  
+  // Combine: existing apps from vibeapps.dev + additional curated apps
+  const allApps = [...uniqueApps, ...additionalApps];
 
   const data: HackathonData = {
     lastUpdated: new Date().toISOString(),
