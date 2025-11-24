@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-11-24T18:16:34.669Z",
+  "lastUpdated": "2025-11-24T18:29:42.525Z",
   "sponsors": [
     {
       "label": "TanStack Start - Full-stack Framework powered by TanStack Router for React and Solid",
@@ -791,8 +791,7 @@
         "Astro",
         "tanstackstart"
       ],
-      "author": "Swatantra Sohni",
-      "repoUrl": "https://github.com/SohniSwatantra/VibeCodingWiki"
+      "author": "Swatantra Sohni"
     }
   ]
 }

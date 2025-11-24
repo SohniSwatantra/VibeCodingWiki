@@ -542,7 +542,6 @@ async function buildHackathonData() {
       description: 'A collaborative knowledge base for Vibe Coders. Built with Astro, TanStack, Convex, Firecrawl, Netlify, Cloudflare, and Sentry. Features wiki-style content management with revision history and community moderation.',
       tags: ['TanStack', 'convex', 'Firecrawl', 'Netlify', 'Cloudflare', 'Sentry', 'Astro', 'tanstackstart'],
       author: 'Swatantra Sohni',
-      repoUrl: 'https://github.com/SohniSwatantra/VibeCodingWiki',
     },
   ];
   
