@@ -1,0 +1,191 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import hackathonData from '../../data/tanstack-hackathon.json';
+
+const {
+  sponsors,
+  howItWorks,
+  howToParticipate,
+  prizes,
+  resources,
+  judges,
+  rulesMarkdown,
+  apps,
+  lastUpdated,
+} = hackathonData;
+
+const linkify = (text: string) =>
+  text.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    '<a class="text-[#0645ad] hover:underline" target="_blank" rel="noopener noreferrer" href="$2">$1</a>',
+  );
+
+const ruleParagraphs = rulesMarkdown
+  .split(/\n\n+/)
+  .map((para) => para.trim())
+  .filter(Boolean)
+  .map(linkify);
+
+const formattedUpdated = new Date(lastUpdated).toLocaleString();
+---
+
+<AppLayout
+  title="TanStack Start Hackathon"
+  description="Convex, TanStack, and community partners joined forces for a full-stack hackathon featuring live data, automation, and realtime collaboration."
+>
+  <article class="space-y-8">
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <header class="border-b border-[#eaecf0] pb-3">
+        <p class="text-xs uppercase tracking-[0.4em] text-[#72777d]">Did you know?</p>
+        <h1 class="text-[2.2rem] font-normal leading-snug text-[#202122]">TanStack Start Hackathon</h1>
+        <p class="mt-2 text-sm text-[#54595d]">
+          Based on the official
+          <a class="text-[#0645ad] hover:underline" href="https://www.convex.dev/hackathons/tanstack" target="_blank"
+            rel="noopener noreferrer">Convex + TanStack Start announcement</a>
+          and the public submissions listed on
+          <a class="text-[#0645ad] hover:underline" href="https://vibeapps.dev/" target="_blank" rel="noopener noreferrer">
+            VibeApps</a
+          >, this page keeps the hackathon highlights in wiki form.
+        </p>
+      </header>
+      <dl class="mt-4 grid gap-4 md:grid-cols-3 text-sm text-[#202122]">
+        <div>
+          <dt class="font-semibold text-[#202122]">Duration</dt>
+          <dd class="mt-1 space-y-1">
+            {howItWorks.duration.map((entry) => (
+              <p>{entry}</p>
+            ))}
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-[#202122]">Location</dt>
+          <dd class="mt-1">{howItWorks.location}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-[#202122]">Prize pool</dt>
+          <dd class="mt-1">{howItWorks.prizePool}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Sponsors &amp; partners</h2>
+      <p class="mt-2 text-sm text-[#54595d]">
+        Each sponsor contributed credits, API access, or community support throughout the competition.
+      </p>
+      <div class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        {sponsors.map((sponsor) => (
+          <a class="rounded border border-[#d5d5d5] bg-white p-3 text-sm text-[#0645ad] hover:shadow-sm" href={sponsor.url}
+            target="_blank" rel="noopener noreferrer">
+            {sponsor.label}
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">How to participate</h2>
+      <ol class="mt-3 space-y-4 text-sm text-[#202122]">
+        {howToParticipate.map((step) => (
+          <li class="rounded border border-[#eaecf0] bg-[#f8f9fa] p-3">
+            <p class="text-xs uppercase tracking-[0.3em] text-[#72777d]">Step {step.step}</p>
+            <h3 class="text-base font-semibold text-[#202122]">{step.title}</h3>
+            <p class="mt-1" set:html={linkify(step.description)} />
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Prizes</h2>
+      <div class="mt-4 grid gap-4 md:grid-cols-3">
+        {prizes.map((tier) => (
+          <article class="rounded border border-[#eaecf0] bg-[#f8f9fa] p-4">
+            <h3 class="text-lg font-semibold text-[#202122]">{tier.title}</h3>
+            <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-[#202122]">
+              {tier.rewards.map((reward) => (
+                <li>{reward}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Apps built during the hackathon</h2>
+      <p class="mt-1 text-sm text-[#54595d]">
+        Titles and tags are sourced from the VibeApps showcase, which tracks every <strong>tanstackstart</strong> submission.
+      </p>
+      <div class="mt-4 grid gap-4 md:grid-cols-2">
+        {apps.map((app) => (
+          <article class="rounded border border-[#eaecf0] bg-[#f8f9fa] p-4">
+            <h3 class="text-lg font-semibold text-[#202122]">
+              <a class="text-[#0645ad] hover:underline" href={app.url} target="_blank" rel="noopener noreferrer">
+                {app.name}
+              </a>
+            </h3>
+            <p class="mt-1 text-sm text-[#202122]">{app.description}</p>
+            {app.tags.length > 0 && (
+              <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+                {app.tags.map((tag) => (
+                  <li class="rounded border border-[#c8ccd1] bg-white px-2 py-1 text-[#555]">{tag}</li>
+                ))}
+              </ul>
+            )}
+            {app.author && <p class="mt-2 text-xs text-[#72777d]">by {app.author}</p>}
+            {app.repoUrl && (
+              <p class="text-xs">
+                <a class="text-[#0645ad]" href={app.repoUrl} target="_blank" rel="noopener noreferrer">View repo</a>
+              </p>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Resources</h2>
+      <ul class="mt-3 space-y-2 text-sm text-[#0645ad]">
+        {resources.map((resource) => (
+          <li>
+            <a class="hover:underline" href={resource.url} target="_blank" rel="noopener noreferrer">{resource.label}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Meet the judges</h2>
+      <div class="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-4">
+        {judges.map((judge) => (
+          <a class="rounded border border-[#d5d5d5] bg-white p-3 text-sm text-[#0645ad]" href={judge.url} target="_blank"
+            rel="noopener noreferrer">
+            {judge.name}
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-normal text-[#202122]">Rules &amp; guidelines</h2>
+      <div class="mt-3 space-y-3 text-sm text-[#202122]">
+        {ruleParagraphs.map((paragraph) => (
+          <p set:html={paragraph} />
+        ))}
+      </div>
+    </section>
+
+    <section class="rounded border border-[#c8ccd1] bg-[#fef6e7] p-4 text-xs text-[#555]">
+      <p>
+        Data last refreshed via Firecrawl on <strong>{formattedUpdated}</strong>. Sources:
+        <a class="ml-1 text-[#0645ad] hover:underline" href="https://www.convex.dev/hackathons/tanstack" target="_blank"
+          rel="noopener noreferrer">convex.dev/hackathons/tanstack</a>,{' '}
+        <a class="text-[#0645ad] hover:underline" href="https://vibeapps.dev/" target="_blank" rel="noopener noreferrer">
+          vibeapps.dev
+        </a>
+      </p>
+    </section>
+  </article>
+</AppLayout>
+
