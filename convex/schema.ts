@@ -258,9 +258,9 @@ export default defineSchema({
     category: v.string(), // Games, Tech, Health, Travel, Habits, Productivity, Others
     categoryOther: v.optional(v.string()), // If category is "Others"
     description: v.string(),
-    builtIn: v.string(), // Lovable, Bolt, V0, Replit, Cursor, CoPilot, VScode, Claude Code, Vibe Code APP, Vibingbase, Others
+    builtIn: v.string(), // Lovable, Bolt, V0, Replit, Cursor, CoPilot, VScode, Claude Code, Vibe Code APP, Vibingbase, Base44, Gemini AI Studio, Others
     builtInOther: v.optional(v.string()), // If builtIn is "Others"
-    submittedBy: v.id('users'),
+    submittedBy: v.optional(v.id('users')), // Optional for public/MCP submissions
     submittedAt: v.number(),
     status: v.union(v.literal('pending'), v.literal('approved'), v.literal('rejected')),
     approvedBy: v.optional(v.id('users')),
@@ -268,7 +268,8 @@ export default defineSchema({
   })
     .index('by_category', ['category'])
     .index('by_status', ['status'])
-    .index('by_submittedBy', ['submittedBy']),
+    .index('by_submittedBy', ['submittedBy'])
+    .index('by_builtIn', ['builtIn']),
 
   newsletterSubscribers: defineTable({
     userId: v.id('users'),

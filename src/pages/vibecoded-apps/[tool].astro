@@ -1,0 +1,93 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import { AppList } from '../../components/app/AppList';
+import { slugToTool } from '../../components/app/ToolCard';
+
+const { tool: toolSlug } = Astro.params;
+const toolName = slugToTool(toolSlug || '');
+
+// Valid tools for static path generation
+const BUILD_TOOLS = [
+  'Lovable',
+  'Bolt',
+  'V0',
+  'Replit',
+  'Cursor',
+  'CoPilot',
+  'VScode',
+  'Claude Code',
+  'Vibe Code APP',
+  'Vibingbase',
+  'Base44',
+  'Gemini AI Studio',
+  'Others',
+];
+
+// Validate tool name
+const isValidTool = BUILD_TOOLS.includes(toolName);
+
+export function getStaticPaths() {
+  const tools = [
+    'lovable',
+    'bolt',
+    'v0',
+    'replit',
+    'cursor',
+    'copilot',
+    'vscode',
+    'claude-code',
+    'vibe-code-app',
+    'vibingbase',
+    'base44',
+    'gemini-ai-studio',
+    'others',
+  ];
+  return tools.map((tool) => ({ params: { tool } }));
+}
+---
+
+<AppLayout
+  title={isValidTool ? `${toolName} Apps` : 'Tool Not Found'}
+  description={isValidTool ? `Apps built with ${toolName}` : 'The requested tool was not found'}
+>
+  <div class="space-y-6">
+    {isValidTool ? (
+      <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <nav class="text-sm text-[#54595d] mb-2">
+              <a href="/vibecoded-apps" class="text-[#0645ad] hover:underline">Vibecoded Apps</a>
+              <span class="mx-2">/</span>
+              <span>{toolName}</span>
+            </nav>
+            <h2 class="text-2xl font-semibold text-[#202122]">Apps Built with {toolName}</h2>
+            <p class="text-sm text-[#54595d] mt-1">
+              Explore applications created using {toolName}
+            </p>
+          </div>
+          <a
+            href="/submit-app"
+            class="inline-flex items-center rounded border border-[#0645ad] bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b0080]"
+          >
+            Submit Your App
+          </a>
+        </div>
+
+        <AppList builtIn={toolName} client:load />
+      </article>
+    ) : (
+      <article class="rounded border border-[#d33f3f] bg-[#f8d7da] p-6 shadow-sm">
+        <h2 class="text-xl font-semibold text-[#721c24] mb-2">Tool Not Found</h2>
+        <p class="text-sm text-[#721c24] mb-4">
+          The vibecoding tool "{toolSlug}" was not found.
+        </p>
+        <a
+          href="/vibecoded-apps"
+          class="inline-flex items-center rounded border border-[#721c24] bg-white px-4 py-2 text-sm font-semibold text-[#721c24] hover:bg-[#f8d7da]"
+        >
+          Browse All Tools
+        </a>
+      </article>
+    )}
+  </div>
+</AppLayout>

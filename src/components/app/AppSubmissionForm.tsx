@@ -23,6 +23,8 @@ const BUILD_TOOLS = [
   'Claude Code',
   'Vibe Code APP',
   'Vibingbase',
+  'Base44',
+  'Gemini AI Studio',
   'Others',
 ];
 

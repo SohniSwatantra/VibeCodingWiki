@@ -1,0 +1,89 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import { runConvexQuery } from '../../lib/convex.server';
+import { ToolCard, toolToSlug } from '../../components/app/ToolCard';
+
+const BUILD_TOOLS = [
+  'Lovable',
+  'Bolt',
+  'V0',
+  'Replit',
+  'Cursor',
+  'CoPilot',
+  'VScode',
+  'Claude Code',
+  'Vibe Code APP',
+  'Vibingbase',
+  'Base44',
+  'Gemini AI Studio',
+  'Others',
+];
+
+// Fetch app counts by tool
+const appCounts = await runConvexQuery<Record<string, number>>('apps:getAppCountsByTool', {}) || {};
+
+// Calculate total apps
+const totalApps = Object.values(appCounts).reduce((sum, count) => sum + count, 0);
+---
+
+<AppLayout
+  title="Vibecoded Apps"
+  description="Explore apps built with AI-powered vibecoding tools"
+>
+  <div class="space-y-6">
+    <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-semibold text-[#202122]">Vibecoded Apps Gallery</h2>
+          <p class="text-sm text-[#54595d] mt-1">
+            {totalApps} {totalApps === 1 ? 'app' : 'apps'} built using AI vibecoding tools
+          </p>
+        </div>
+        <a
+          href="/submit-app"
+          class="inline-flex items-center rounded border border-[#0645ad] bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b0080]"
+        >
+          Submit Your App
+        </a>
+      </div>
+
+      <p class="text-sm text-[#54595d] mb-6">
+        Browse apps created with various AI-powered development tools. Click on a tool to see all apps built with it.
+      </p>
+
+      <h3 class="text-lg font-semibold text-[#202122] mb-4">Browse by Tool</h3>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {BUILD_TOOLS.map((tool) => (
+          <ToolCard
+            name={tool}
+            count={appCounts[tool] || 0}
+            slug={toolToSlug(tool)}
+          />
+        ))}
+      </div>
+    </article>
+
+    <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-[#202122] mb-4">About VibeCoding</h3>
+      <p class="text-sm text-[#54595d] mb-4">
+        VibeCoding is a new paradigm of software development where you describe what you want in natural language,
+        and AI tools generate the code for you. These tools enable anyone to build applications without traditional coding skills.
+      </p>
+      <p class="text-sm text-[#54595d]">
+        Have you built something amazing with a vibecoding tool? <a href="/submit-app" class="text-[#0645ad] hover:underline">Submit your app</a> to be featured in our gallery!
+      </p>
+    </article>
+
+    <article class="rounded border border-[#a2a9b1] bg-[#f8f9fa] p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-[#202122] mb-4">For AI Tool Developers</h3>
+      <p class="text-sm text-[#54595d] mb-4">
+        Want to enable your users to submit apps directly from your AI coding tool?
+        Use our <strong>Vibecodingwiki MCP</strong> (Model Context Protocol) server!
+      </p>
+      <p class="text-sm text-[#54595d]">
+        Users can add the MCP to tools like Bolt, Lovable, Replit, and others to submit and browse apps without leaving their development environment.
+      </p>
+    </article>
+  </div>
+</AppLayout>

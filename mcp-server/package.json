@@ -1,0 +1,38 @@
+{
+  "name": "@vibecodingwiki/mcp",
+  "version": "1.0.0",
+  "description": "MCP server for submitting and browsing apps on VibeCoding Wiki",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "vibecodingwiki-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "vibecodingwiki",
+    "vibecoding",
+    "ai-tools"
+  ],
+  "author": "VibeCoding Wiki",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
