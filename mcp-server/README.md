@@ -1,49 +1,36 @@
 # VibeCodingWiki MCP Server
 
-A Model Context Protocol (MCP) server that allows AI coding tools to submit and browse apps on VibeCoding Wiki.
+A **remote** Model Context Protocol (MCP) server hosted on Netlify that allows AI coding tools to submit and browse apps on VibeCoding Wiki.
 
 ## Features
 
-- **Submit apps** directly from your AI coding tool (Bolt, Lovable, Replit, etc.)
+- **Submit apps** directly from your AI coding tool (Bolt, Lovable, Replit, Claude, etc.)
 - **Browse apps** by tool or category
 - **List supported tools** and categories
+- **Hosted remotely** - no local installation needed!
 
-## Installation
-
-### Using npx (recommended)
+## Quick Start
 
 Add to your AI tool's MCP configuration:
+
+### Claude Desktop / Claude Code
 
 ```json
 {
   "mcpServers": {
     "vibecodingwiki": {
       "command": "npx",
-      "args": ["-y", "@vibecodingwiki/mcp"]
+      "args": ["mcp-remote@next", "https://vibecodingwiki.com/mcp"]
     }
   }
 }
 ```
 
-### Local installation
+### Other AI Tools
 
-1. Clone and build:
-```bash
-cd mcp-server
-npm install
-npm run build
+Use the MCP endpoint directly:
 ```
-
-2. Add to your MCP config:
-```json
-{
-  "mcpServers": {
-    "vibecodingwiki": {
-      "command": "node",
-      "args": ["/path/to/mcp-server/dist/index.js"]
-    }
-  }
-}
+https://vibecodingwiki.com/mcp
 ```
 
 ## Available Tools
@@ -60,7 +47,7 @@ Submit a new app to VibeCoding Wiki.
 - `builtIn` (required): The tool used (Lovable, Bolt, V0, Replit, Cursor, CoPilot, VScode, Claude Code, etc.)
 - `builtInOther`: Custom tool name if "Others" is selected
 
-**Example:**
+**Example prompt:**
 ```
 Submit my app "TaskMaster" to VibeCoding Wiki. It's a productivity app for managing daily tasks, built with Bolt.
 ```
@@ -74,7 +61,7 @@ List apps from VibeCoding Wiki.
 - `category` (optional): Filter by category
 - `limit` (optional): Max results (default: 20, max: 100)
 
-**Example:**
+**Example prompt:**
 ```
 Show me apps built with Lovable
 ```
@@ -83,7 +70,7 @@ Show me apps built with Lovable
 
 List all supported vibecoding tools.
 
-**Example:**
+**Example prompt:**
 ```
 What vibecoding tools are supported?
 ```
@@ -92,7 +79,7 @@ What vibecoding tools are supported?
 
 List all app categories.
 
-**Example:**
+**Example prompt:**
 ```
 What categories can I use when submitting an app?
 ```
@@ -123,29 +110,26 @@ What categories can I use when submitting an app?
 - Productivity
 - Others (specify custom category)
 
-## Configuration
+## API Endpoint
 
-Set the `VIBECODINGWIKI_API_URL` environment variable to use a custom API endpoint:
-
-```json
-{
-  "mcpServers": {
-    "vibecodingwiki": {
-      "command": "npx",
-      "args": ["-y", "@vibecodingwiki/mcp"],
-      "env": {
-        "VIBECODINGWIKI_API_URL": "https://your-custom-domain.com"
-      }
-    }
-  }
-}
+The MCP server is hosted at:
 ```
+https://vibecodingwiki.com/mcp
+```
+
+### Testing with MCP Inspector
+
+```bash
+npx @modelcontextprotocol/inspector npx mcp-remote@next https://vibecodingwiki.com/mcp
+```
+
+Then open http://localhost:6274/ to test the tools.
 
 ## Links
 
 - [VibeCoding Wiki](https://vibecodingwiki.com)
 - [Vibecoded Apps Gallery](https://vibecodingwiki.com/vibecoded-apps)
-- [Submit an App](https://vibecodingwiki.com/submit-app)
+- [Submit an App (Web)](https://vibecodingwiki.com/submit-app)
 
 ## License
 
