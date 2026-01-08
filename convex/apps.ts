@@ -45,6 +45,7 @@ export const submitApp = mutation({
     const userId = viewer._id;
     const nowTs = now();
 
+    // Auto-approve apps on submission - no moderation queue needed
     const appId = await ctx.db.insert('apps', {
       name: args.name,
       category: args.category,
@@ -54,7 +55,9 @@ export const submitApp = mutation({
       builtInOther: args.builtInOther,
       submittedBy: userId,
       submittedAt: nowTs,
-      status: 'pending',
+      status: 'approved',
+      approvedBy: userId,
+      approvedAt: nowTs,
     });
 
     return { appId };
@@ -141,6 +144,7 @@ export const submitAppPublic = mutation({
   handler: async (ctx: any, args) => {
     const nowTs = now();
 
+    // Auto-approve apps on submission - no moderation queue needed
     const appId = await ctx.db.insert('apps', {
       name: args.name,
       category: args.category,
@@ -149,7 +153,8 @@ export const submitAppPublic = mutation({
       builtIn: args.builtIn,
       builtInOther: args.builtInOther,
       submittedAt: nowTs,
-      status: 'pending',
+      status: 'approved',
+      approvedAt: nowTs,
     });
 
     return { appId };
@@ -215,5 +220,50 @@ export const getCategories = query({
   args: {},
   handler: async () => {
     return CATEGORIES;
+  },
+});
+
+// Admin: List all apps with submitter info (for admin console)
+export const listAllAppsAdmin = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: any, args) => {
+    const limit = args.limit ?? 200;
+
+    const apps = await ctx.db
+      .query('apps')
+      .order('desc')
+      .take(limit);
+
+    // Enrich with submitter info
+    const enriched = await Promise.all(
+      apps.map(async (app: any) => {
+        const submitter = app.submittedBy ? await ctx.db.get(app.submittedBy) : null;
+        return {
+          ...app,
+          submitterName: submitter?.displayName ?? submitter?.email ?? 'Anonymous',
+          submitterEmail: submitter?.email ?? null,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+// Admin: Delete an app (super_admin only)
+export const deleteApp = mutation({
+  args: { appId: v.id('apps') },
+  handler: async (ctx: any, args) => {
+    // Note: Role check should be done at API layer
+    const app = await ctx.db.get(args.appId);
+    if (!app) {
+      throw new Error('App not found');
+    }
+
+    await ctx.db.delete(args.appId);
+
+    return { deleted: true, appId: args.appId, appName: app.name };
   },
 });

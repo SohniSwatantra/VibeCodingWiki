@@ -1,0 +1,277 @@
+---
+export const prerender = false;
+
+import AppLayout from '../../layouts/AppLayout.astro';
+import { getConvexUserByWorkOSId } from '../../lib/wiki/convexHelpers';
+import { runConvexQuery, runConvexMutation } from '../../lib/convex.server';
+
+// Check authentication and role
+if (!Astro.locals.user) {
+  return Astro.redirect('/login');
+}
+
+let convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+
+// If user not found, try to sync from WorkOS (fallback if middleware sync failed)
+if (!convexUser) {
+  console.log('[ADMIN/APPS] User not found, attempting sync for:', Astro.locals.user.email);
+  try {
+    await runConvexMutation('users:syncWorkOSIdentity', {
+      workosUserId: Astro.locals.user.id,
+      email: Astro.locals.user.email ?? '',
+      firstName: Astro.locals.user.firstName ?? undefined,
+      lastName: Astro.locals.user.lastName ?? undefined,
+      avatarUrl: Astro.locals.user.profilePictureUrl ?? undefined,
+    }, { useAdmin: true });
+    convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+  } catch (syncError) {
+    console.error('[ADMIN/APPS] Failed to sync user:', syncError);
+  }
+}
+
+if (!convexUser) {
+  return new Response('User profile not found. Please try logging out and back in.', { status: 403 });
+}
+
+const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+const isSuperAdmin = roleNames.includes('super_admin');
+
+if (!isSuperAdmin) {
+  return new Response('Access denied. Super admin role required.', { status: 403 });
+}
+
+// Fetch all apps
+const allApps = await runConvexQuery<any[]>('apps:listAllAppsAdmin', { limit: 200 }) ?? [];
+
+// Calculate stats
+const stats = {
+  total: allApps.length,
+  approved: allApps.filter((a: any) => a.status === 'approved').length,
+  pending: allApps.filter((a: any) => a.status === 'pending').length,
+  rejected: allApps.filter((a: any) => a.status === 'rejected').length,
+};
+
+// Group by category
+const byCategory: Record<string, number> = {};
+for (const app of allApps) {
+  const cat = app.category === 'Others' ? app.categoryOther || 'Others' : app.category;
+  byCategory[cat] = (byCategory[cat] || 0) + 1;
+}
+
+// Group by tool
+const byTool: Record<string, number> = {};
+for (const app of allApps) {
+  const tool = app.builtIn === 'Others' ? app.builtInOther || 'Others' : app.builtIn;
+  byTool[tool] = (byTool[tool] || 0) + 1;
+}
+---
+
+<AppLayout title="Apps Management" description="Manage submitted apps">
+  <div class="space-y-6">
+    <header class="border-b border-[#a2a9b1] pb-4">
+      <h1 class="text-[2rem] font-normal text-[#202122]">Apps Management</h1>
+      <p class="text-sm text-[#54595d]">View and manage all submitted apps</p>
+      <!-- Admin Navigation -->
+      <nav class="mt-4 flex flex-wrap gap-2">
+        <a href="/admin" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          Dashboard
+        </a>
+        <a href="/admin/activities" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          Recent Activities
+        </a>
+        <a href="/admin/apps" class="rounded bg-[#0645ad] px-3 py-1.5 text-xs font-semibold text-white">
+          Apps Management
+        </a>
+        <a href="/admin/content-manager" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          Content Manager
+        </a>
+      </nav>
+    </header>
+
+    <!-- Stats Overview -->
+    <section class="grid gap-4 md:grid-cols-4">
+      <div class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">Total Apps</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#202122]">{stats.total}</p>
+      </div>
+      <div class="rounded border border-[#c8ccd1] bg-[#e8f4e8] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">Approved</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#008000]">{stats.approved}</p>
+      </div>
+      <div class="rounded border border-[#c8ccd1] bg-[#fef6e7] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">Pending</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#f4a500]">{stats.pending}</p>
+      </div>
+      <div class="rounded border border-[#c8ccd1] bg-[#fee] p-4">
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">Rejected</h3>
+        <p class="mt-2 text-3xl font-semibold text-[#d33f3f]">{stats.rejected}</p>
+      </div>
+    </section>
+
+    <!-- Info Banner -->
+    <section class="rounded border border-[#3366cc] bg-[#e8f0ff] p-4">
+      <h2 class="text-sm font-semibold text-[#202122]">Auto-Approval Enabled</h2>
+      <p class="mt-1 text-xs text-[#54595d]">
+        Apps are now automatically approved when submitted. You can delete spam or inappropriate apps from the list below.
+      </p>
+    </section>
+
+    <!-- Apps List -->
+    <section class="rounded border border-[#c8ccd1] bg-white shadow-sm">
+      <div class="border-b border-[#c8ccd1] bg-[#f8f9fa] px-4 py-3">
+        <h2 class="text-lg font-semibold text-[#202122]">All Submitted Apps ({allApps.length})</h2>
+      </div>
+
+      {allApps.length === 0 ? (
+        <div class="p-8 text-center">
+          <p class="text-[#54595d]">No apps have been submitted yet.</p>
+          <a href="/submit-app" class="mt-4 inline-block rounded bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b0080]">
+            Submit First App
+          </a>
+        </div>
+      ) : (
+        <div class="divide-y divide-[#eaecf0]">
+          {allApps.map((app: any) => (
+            <div class="p-4 hover:bg-[#f8f9fa] transition-colors" data-app-id={app._id}>
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-semibold text-[#202122]">{app.name}</h3>
+                    <span class={`rounded px-2 py-0.5 text-xs font-medium ${
+                      app.status === 'approved' ? 'bg-[#e8f4e8] text-[#008000]' :
+                      app.status === 'pending' ? 'bg-[#fef6e7] text-[#f4a500]' :
+                      'bg-[#fee] text-[#d33f3f]'
+                    }`}>
+                      {app.status}
+                    </span>
+                  </div>
+
+                  <p class="mt-1 text-sm text-[#54595d] line-clamp-2">{app.description}</p>
+
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="rounded bg-[#e8f0ff] px-2 py-0.5 text-xs text-[#3366cc]">
+                      {app.category === 'Others' ? app.categoryOther : app.category}
+                    </span>
+                    <span class="rounded bg-[#fef6e7] px-2 py-0.5 text-xs text-[#f4a500]">
+                      Built with: {app.builtIn === 'Others' ? app.builtInOther : app.builtIn}
+                    </span>
+                  </div>
+
+                  <div class="mt-2 text-xs text-[#72777d]">
+                    <span>Submitted by: <strong>{app.submitterName}</strong></span>
+                    <span class="mx-2">|</span>
+                    <span>{new Date(app.submittedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
+                  </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                  <button
+                    class="delete-app-btn rounded border border-[#d33f3f] bg-white px-3 py-1.5 text-xs font-semibold text-[#d33f3f] hover:bg-[#fee]"
+                    data-app-id={app._id}
+                    data-app-name={app.name}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <!-- Category & Tool Breakdown -->
+    <div class="grid gap-6 md:grid-cols-2">
+      <section class="rounded border border-[#c8ccd1] bg-white p-4 shadow-sm">
+        <h3 class="font-semibold text-[#202122] mb-3">By Category</h3>
+        <div class="space-y-2">
+          {Object.entries(byCategory).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-[#54595d]">{cat}</span>
+              <span class="font-semibold text-[#202122]">{count}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section class="rounded border border-[#c8ccd1] bg-white p-4 shadow-sm">
+        <h3 class="font-semibold text-[#202122] mb-3">By Tool</h3>
+        <div class="space-y-2">
+          {Object.entries(byTool).sort((a, b) => b[1] - a[1]).map(([tool, count]) => (
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-[#54595d]">{tool}</span>
+              <span class="font-semibold text-[#202122]">{count}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+
+    <!-- Delete Result Message -->
+    <div id="delete-result" class="hidden rounded border p-4"></div>
+  </div>
+
+  <script>
+    // Handle delete button clicks
+    document.querySelectorAll('.delete-app-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const target = e.target as HTMLButtonElement;
+        const appId = target.dataset.appId;
+        const appName = target.dataset.appName;
+
+        if (!confirm(`Are you sure you want to delete "${appName}"? This action cannot be undone.`)) {
+          return;
+        }
+
+        target.disabled = true;
+        target.textContent = 'Deleting...';
+
+        try {
+          const response = await fetch('/api/apps/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appId }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // Remove the app row from DOM
+            const appRow = document.querySelector(`[data-app-id="${appId}"]`);
+            if (appRow) {
+              appRow.remove();
+            }
+
+            // Show success message
+            const resultDiv = document.getElementById('delete-result');
+            if (resultDiv) {
+              resultDiv.classList.remove('hidden');
+              resultDiv.className = 'rounded border border-[#008000] bg-[#e8f4e8] p-4 text-[#008000]';
+              resultDiv.innerHTML = `<strong>Deleted:</strong> ${appName}`;
+              setTimeout(() => resultDiv.classList.add('hidden'), 3000);
+            }
+          } else {
+            throw new Error(result.message || 'Failed to delete app');
+          }
+        } catch (error) {
+          target.disabled = false;
+          target.textContent = 'Delete';
+
+          const resultDiv = document.getElementById('delete-result');
+          if (resultDiv) {
+            resultDiv.classList.remove('hidden');
+            resultDiv.className = 'rounded border border-[#d33f3f] bg-[#fee] p-4 text-[#d33f3f]';
+            resultDiv.innerHTML = `<strong>Error:</strong> ${error instanceof Error ? error.message : 'Unknown error'}`;
+          }
+        }
+      });
+    });
+  </script>
+</AppLayout>
