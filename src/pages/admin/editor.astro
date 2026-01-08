@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 import AppLayout from '../../layouts/AppLayout.astro';
-import { runConvexQuery } from '../../lib/convex.server';
+import { runConvexQuery, runConvexMutation } from '../../lib/convex.server';
 
 // Check authentication and super_admin role
 const isAuthenticated = Boolean(Astro.locals.user);
@@ -11,9 +11,27 @@ if (!isAuthenticated) {
 
 // Get user roles
 const { getConvexUserByWorkOSId } = await import('../../lib/wiki/convexHelpers');
-const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+let convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+
+// If user not found, try to sync from WorkOS (fallback if middleware sync failed)
 if (!convexUser) {
-  return new Response('User not found in database', { status: 403 });
+  console.log('[ADMIN/EDITOR] User not found, attempting sync for:', Astro.locals.user.email);
+  try {
+    await runConvexMutation('users:syncWorkOSIdentity', {
+      workosUserId: Astro.locals.user.id,
+      email: Astro.locals.user.email ?? '',
+      firstName: Astro.locals.user.firstName ?? undefined,
+      lastName: Astro.locals.user.lastName ?? undefined,
+      avatarUrl: Astro.locals.user.profilePictureUrl ?? undefined,
+    }, { useAdmin: true });
+    convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+  } catch (syncError) {
+    console.error('[ADMIN/EDITOR] Failed to sync user:', syncError);
+  }
+}
+
+if (!convexUser) {
+  return new Response('User not found in database. Please try logging out and back in.', { status: 403 });
 }
 
 const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
