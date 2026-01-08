@@ -23,7 +23,7 @@ if (!convexUser) {
       firstName: Astro.locals.user.firstName ?? undefined,
       lastName: Astro.locals.user.lastName ?? undefined,
       avatarUrl: Astro.locals.user.profilePictureUrl ?? undefined,
-    }, { useAdmin: true });
+    }, { useAdmin: true, force: true });
     convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
   } catch (syncError) {
     console.error('[ADMIN/EDITOR] Failed to sync user:', syncError);

@@ -11,6 +11,7 @@ export type ActingIdentity = {
 type ConvexRunOptions = {
   actingAs?: ActingIdentity;
   useAdmin?: boolean;
+  force?: boolean; // Bypass the retry window check for critical operations
 };
 
 // Parse CONVEX_URL defensively - extract only the URL part if it's concatenated with CONVEX_ADMIN_KEY
@@ -139,7 +140,8 @@ export async function runConvexQuery<T = any>(
   args: Record<string, unknown> = {},
   options: ConvexRunOptions = {},
 ): Promise<T | null> {
-  if (shouldSkipConvexCalls()) {
+  // Allow force option to bypass the retry window for critical operations
+  if (!options.force && shouldSkipConvexCalls()) {
     console.log(`runConvexQuery: Skipping ${name} (Convex calls disabled)`);
     return null;
   }
@@ -192,7 +194,8 @@ export async function runConvexMutation<T = any>(
   args: Record<string, unknown> = {},
   options: ConvexRunOptions = {},
 ): Promise<T | null> {
-  if (shouldSkipConvexCalls()) {
+  // Allow force option to bypass the retry window for critical operations
+  if (!options.force && shouldSkipConvexCalls()) {
     console.log(`runConvexMutation: Skipping ${name} (Convex calls disabled)`);
     return null;
   }

@@ -22,7 +22,7 @@ if (!convexUser) {
       firstName: Astro.locals.user.firstName ?? undefined,
       lastName: Astro.locals.user.lastName ?? undefined,
       avatarUrl: Astro.locals.user.profilePictureUrl ?? undefined,
-    }, { useAdmin: true });
+    }, { useAdmin: true, force: true });
 
     // Retry fetching the user after sync
     convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
