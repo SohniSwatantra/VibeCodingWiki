@@ -1,5 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
-import { getUserFromRequest, createSessionCookie, shouldUseSecureCookies } from './lib/auth/workos.server';
+import { getUserFromRequest, createSessionCookie, shouldUseSecureCookies, syncWorkOSIdentityToConvex } from './lib/auth/workos.server';
 
 const workosSessionMiddleware = defineMiddleware(async ({ request, locals }, next) => {
   const middlewareStart = Date.now();
@@ -17,6 +17,15 @@ const workosSessionMiddleware = defineMiddleware(async ({ request, locals }, nex
     if (authResult) {
       locals.user = authResult.user;
       console.log(`[MIDDLEWARE] ${request.method} ${url.pathname} - Auth completed in ${Date.now() - middlewareStart}ms, user: ${authResult.user.email}`);
+
+      // Sync user to Convex to ensure profile exists (handles cases where login sync failed)
+      await syncWorkOSIdentityToConvex({
+        id: authResult.user.id,
+        email: authResult.user.email,
+        firstName: authResult.user.firstName,
+        lastName: authResult.user.lastName,
+        profilePictureUrl: authResult.user.profilePictureUrl,
+      });
 
       // If session was refreshed, prepare cookie to be set
       if (authResult.refreshedSession) {
