@@ -1,29 +1,10 @@
 ---
 import AppLayout from '../../layouts/AppLayout.astro';
 import { runConvexQuery } from '../../lib/convex.server';
-import { ToolCard, toolToSlug } from '../../components/app/ToolCard';
 
-const BUILD_TOOLS = [
-  'Lovable',
-  'Bolt',
-  'V0',
-  'Replit',
-  'Cursor',
-  'CoPilot',
-  'VScode',
-  'Claude Code',
-  'Vibe Code APP',
-  'Vibingbase',
-  'Base44',
-  'Gemini AI Studio',
-  'Others',
-];
-
-// Fetch app counts by tool
-const appCounts = await runConvexQuery<Record<string, number>>('apps:getAppCountsByTool', {}) || {};
-
-// Calculate total apps
-const totalApps = Object.values(appCounts).reduce((sum, count) => sum + count, 0);
+// Fetch all approved apps
+const allApps = await runConvexQuery<any[]>('apps:listApps', { status: 'approved', limit: 200 }) || [];
+const totalApps = allApps.length;
 ---
 
 <AppLayout
@@ -47,21 +28,35 @@ const totalApps = Object.values(appCounts).reduce((sum, count) => sum + count, 0
         </a>
       </div>
 
-      <p class="text-sm text-[#54595d] mb-6">
-        Browse apps created with various AI-powered development tools. Click on a tool to see all apps built with it.
-      </p>
-
-      <h3 class="text-lg font-semibold text-[#202122] mb-4">Browse by Tool</h3>
-
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {BUILD_TOOLS.map((tool) => (
-          <ToolCard
-            name={tool}
-            count={appCounts[tool] || 0}
-            slug={toolToSlug(tool)}
-          />
-        ))}
-      </div>
+      {allApps.length === 0 ? (
+        <div class="text-center py-8">
+          <p class="text-[#54595d]">No apps have been submitted yet.</p>
+          <a href="/submit-app" class="mt-4 inline-block text-[#0645ad] hover:underline">
+            Be the first to submit an app!
+          </a>
+        </div>
+      ) : (
+        <div class="divide-y divide-[#eaecf0]">
+          {allApps.map((app: any) => (
+            <div class="py-4">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-[#202122]">{app.name}</h3>
+                  <p class="mt-1 text-sm text-[#54595d]">{app.description}</p>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="rounded bg-[#e8f0ff] px-2 py-0.5 text-xs text-[#3366cc]">
+                      {app.category === 'Others' ? app.categoryOther || 'Others' : app.category}
+                    </span>
+                    <span class="rounded bg-[#fef6e7] px-2 py-0.5 text-xs text-[#f4a500]">
+                      Built with: {app.builtIn === 'Others' ? app.builtInOther || 'Others' : app.builtIn}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </article>
 
     <article class="rounded border border-[#a2a9b1] bg-white p-6 shadow-sm">
