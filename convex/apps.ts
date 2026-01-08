@@ -267,3 +267,27 @@ export const deleteApp = mutation({
     return { deleted: true, appId: args.appId, appName: app.name };
   },
 });
+
+// Admin: Approve all pending apps (one-time migration)
+export const approveAllPendingApps = mutation({
+  args: {},
+  handler: async (ctx: any) => {
+    const timestamp = now();
+
+    const pendingApps = await ctx.db
+      .query('apps')
+      .withIndex('by_status', (q: any) => q.eq('status', 'pending'))
+      .collect();
+
+    let approved = 0;
+    for (const app of pendingApps) {
+      await ctx.db.patch(app._id, {
+        status: 'approved',
+        approvedAt: timestamp,
+      });
+      approved++;
+    }
+
+    return { approved, total: pendingApps.length };
+  },
+});

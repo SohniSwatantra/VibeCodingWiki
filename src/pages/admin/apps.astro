@@ -111,10 +111,22 @@ for (const app of allApps) {
 
     <!-- Info Banner -->
     <section class="rounded border border-[#3366cc] bg-[#e8f0ff] p-4">
-      <h2 class="text-sm font-semibold text-[#202122]">Auto-Approval Enabled</h2>
-      <p class="mt-1 text-xs text-[#54595d]">
-        Apps are now automatically approved when submitted. You can delete spam or inappropriate apps from the list below.
-      </p>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-semibold text-[#202122]">Auto-Approval Enabled</h2>
+          <p class="mt-1 text-xs text-[#54595d]">
+            Apps are now automatically approved when submitted. You can delete spam or inappropriate apps from the list below.
+          </p>
+        </div>
+        {stats.pending > 0 && (
+          <button
+            id="approve-all-btn"
+            class="rounded bg-[#008000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#006600] whitespace-nowrap"
+          >
+            Approve All Pending ({stats.pending})
+          </button>
+        )}
+      </div>
     </section>
 
     <!-- Apps List -->
@@ -219,6 +231,51 @@ for (const app of allApps) {
   </div>
 
   <script>
+    // Handle "Approve All Pending" button click
+    const approveAllBtn = document.getElementById('approve-all-btn');
+    if (approveAllBtn) {
+      approveAllBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to approve all pending apps?')) {
+          return;
+        }
+
+        approveAllBtn.disabled = true;
+        approveAllBtn.textContent = 'Approving...';
+
+        try {
+          const response = await fetch('/api/apps/approve-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            const resultDiv = document.getElementById('delete-result');
+            if (resultDiv) {
+              resultDiv.classList.remove('hidden');
+              resultDiv.className = 'rounded border border-[#008000] bg-[#e8f4e8] p-4 text-[#008000]';
+              resultDiv.innerHTML = `<strong>Success:</strong> ${result.message}`;
+            }
+            // Reload to show updated statuses
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            throw new Error(result.message || 'Failed to approve apps');
+          }
+        } catch (error) {
+          approveAllBtn.disabled = false;
+          approveAllBtn.textContent = 'Approve All Pending';
+
+          const resultDiv = document.getElementById('delete-result');
+          if (resultDiv) {
+            resultDiv.classList.remove('hidden');
+            resultDiv.className = 'rounded border border-[#d33f3f] bg-[#fee] p-4 text-[#d33f3f]';
+            resultDiv.innerHTML = `<strong>Error:</strong> ${error instanceof Error ? error.message : 'Unknown error'}`;
+          }
+        }
+      });
+    }
+
     // Handle delete button clicks
     document.querySelectorAll('.delete-app-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
