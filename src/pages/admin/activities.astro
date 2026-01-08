@@ -1,0 +1,300 @@
+---
+export const prerender = false;
+
+import AppLayout from '../../layouts/AppLayout.astro';
+import { getConvexUserByWorkOSId } from '../../lib/wiki/convexHelpers';
+import { runConvexQuery } from '../../lib/convex.server';
+
+// Check authentication and role
+if (!Astro.locals.user) {
+  return Astro.redirect('/login');
+}
+
+const convexUser = await getConvexUserByWorkOSId(Astro.locals.user.id);
+if (!convexUser) {
+  return new Response('User profile not found', { status: 403 });
+}
+
+const userRoles = await runConvexQuery<any[]>('roles:getUserRoles', { userId: convexUser._id });
+const roleNames = userRoles?.map((r: any) => r.role) ?? [];
+const isSuperAdmin = roleNames.includes('super_admin');
+
+if (!isSuperAdmin) {
+  return new Response('Access denied. Super admin role required.', { status: 403 });
+}
+
+// Fetch recent activities
+const activities = await runConvexQuery<any[]>('pages:getRecentActivities', { limit: 100 });
+
+// Get filter from URL
+const url = new URL(Astro.request.url);
+const filterType = url.searchParams.get('filter') || 'all';
+
+// Filter activities if needed
+const filteredActivities = filterType === 'all'
+  ? activities
+  : activities?.filter((a: any) => a.type === filterType) ?? [];
+
+// Group activities by date
+const groupedActivities: Record<string, any[]> = {};
+for (const activity of filteredActivities || []) {
+  const date = new Date(activity.createdAt).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  if (!groupedActivities[date]) {
+    groupedActivities[date] = [];
+  }
+  groupedActivities[date].push(activity);
+}
+
+// Calculate stats
+const stats = {
+  total: activities?.length ?? 0,
+  moderation: activities?.filter((a: any) => a.type === 'moderation').length ?? 0,
+  revisions: activities?.filter((a: any) => a.type === 'revision').length ?? 0,
+  apps: activities?.filter((a: any) => a.type === 'app').length ?? 0,
+  pages: activities?.filter((a: any) => a.type === 'page').length ?? 0,
+};
+
+// Helper function to get action badge color and icon
+function getActionStyle(type: string, action: string): { color: string; bg: string; icon: string } {
+  switch (action) {
+    case 'approved':
+      return { color: 'text-[#008000]', bg: 'bg-[#e8f4e8]', icon: '✓' };
+    case 'rejected':
+      return { color: 'text-[#d33f3f]', bg: 'bg-[#fee]', icon: '✗' };
+    case 'rollback':
+      return { color: 'text-[#f4a500]', bg: 'bg-[#fef6e7]', icon: '↺' };
+    case 'proposed_edit':
+    case 'pending':
+      return { color: 'text-[#f4a500]', bg: 'bg-[#fef6e7]', icon: '✎' };
+    case 'submitted_app':
+      return { color: 'text-[#3366cc]', bg: 'bg-[#e8f0ff]', icon: '📱' };
+    case 'app_approved':
+      return { color: 'text-[#008000]', bg: 'bg-[#e8f4e8]', icon: '✓' };
+    case 'app_rejected':
+      return { color: 'text-[#d33f3f]', bg: 'bg-[#fee]', icon: '✗' };
+    case 'created_page':
+      return { color: 'text-[#0645ad]', bg: 'bg-[#e8f0ff]', icon: '+' };
+    default:
+      return { color: 'text-[#54595d]', bg: 'bg-[#f8f9fa]', icon: '•' };
+  }
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString();
+}
+
+function formatActionLabel(action: string): string {
+  return action
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+---
+
+<AppLayout title="Recent Activities" description="Track all user activities across the platform">
+  <div class="space-y-6">
+    <!-- Header -->
+    <header class="border-b border-[#a2a9b1] pb-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-[2rem] font-normal text-[#202122]">Recent Activities</h1>
+          <p class="text-sm text-[#54595d]">Monitor all user actions: edits, submissions, approvals, and more</p>
+        </div>
+        <a
+          href="/admin"
+          class="rounded border border-[#a2a9b1] bg-white px-4 py-2 text-sm font-semibold text-[#202122] hover:bg-[#f8f9fa]"
+        >
+          Back to Dashboard
+        </a>
+      </div>
+    </header>
+
+    <!-- Stats Overview -->
+    <section class="grid gap-4 md:grid-cols-5">
+      <a href="/admin/activities" class={`rounded border p-4 transition-all hover:shadow-md ${filterType === 'all' ? 'border-[#0645ad] bg-[#e8f0ff]' : 'border-[#c8ccd1] bg-[#f8f9fa]'}`}>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">All Activities</h3>
+        <p class="mt-2 text-2xl font-semibold text-[#202122]">{stats.total}</p>
+      </a>
+      <a href="/admin/activities?filter=moderation" class={`rounded border p-4 transition-all hover:shadow-md ${filterType === 'moderation' ? 'border-[#008000] bg-[#e8f4e8]' : 'border-[#c8ccd1] bg-[#f8f9fa]'}`}>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">Moderations</h3>
+        <p class="mt-2 text-2xl font-semibold text-[#008000]">{stats.moderation}</p>
+      </a>
+      <a href="/admin/activities?filter=revision" class={`rounded border p-4 transition-all hover:shadow-md ${filterType === 'revision' ? 'border-[#f4a500] bg-[#fef6e7]' : 'border-[#c8ccd1] bg-[#f8f9fa]'}`}>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">Edit Proposals</h3>
+        <p class="mt-2 text-2xl font-semibold text-[#f4a500]">{stats.revisions}</p>
+      </a>
+      <a href="/admin/activities?filter=app" class={`rounded border p-4 transition-all hover:shadow-md ${filterType === 'app' ? 'border-[#3366cc] bg-[#e8f0ff]' : 'border-[#c8ccd1] bg-[#f8f9fa]'}`}>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">App Submissions</h3>
+        <p class="mt-2 text-2xl font-semibold text-[#3366cc]">{stats.apps}</p>
+      </a>
+      <a href="/admin/activities?filter=page" class={`rounded border p-4 transition-all hover:shadow-md ${filterType === 'page' ? 'border-[#0645ad] bg-[#e8f0ff]' : 'border-[#c8ccd1] bg-[#f8f9fa]'}`}>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.2em] text-[#72777d]">New Pages</h3>
+        <p class="mt-2 text-2xl font-semibold text-[#0645ad]">{stats.pages}</p>
+      </a>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="rounded border border-[#3366cc] bg-[#e8f0ff] p-4">
+      <h2 class="text-sm font-semibold text-[#202122] mb-3">Quick Actions</h2>
+      <div class="flex flex-wrap gap-2">
+        <a href="/admin" class="rounded bg-[#0645ad] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0b0080]">
+          Admin Dashboard
+        </a>
+        <a href="/admin/content-manager" class="rounded bg-[#0645ad] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0b0080]">
+          Content Manager
+        </a>
+        <a href="/vibecoded-apps" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          View Apps
+        </a>
+        <button
+          id="refresh-btn"
+          class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]"
+        >
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <!-- Activity Feed -->
+    {Object.keys(groupedActivities).length > 0 ? (
+      <section class="space-y-6">
+        {Object.entries(groupedActivities).map(([date, dayActivities]) => (
+          <div class="rounded border border-[#c8ccd1] bg-white shadow-sm overflow-hidden">
+            <div class="bg-[#f8f9fa] px-4 py-2 border-b border-[#c8ccd1]">
+              <h3 class="text-sm font-semibold text-[#202122]">{date}</h3>
+              <p class="text-xs text-[#72777d]">{dayActivities.length} activities</p>
+            </div>
+            <div class="divide-y divide-[#eaecf0]">
+              {dayActivities.map((activity: any) => {
+                const style = getActionStyle(activity.type, activity.action);
+                return (
+                  <div class="p-4 hover:bg-[#f8f9fa] transition-colors">
+                    <div class="flex items-start gap-3">
+                      <!-- Action Icon -->
+                      <div class={`flex-shrink-0 w-8 h-8 rounded-full ${style.bg} flex items-center justify-center ${style.color} font-bold text-sm`}>
+                        {style.icon}
+                      </div>
+
+                      <!-- Activity Content -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-semibold text-[#202122]">{activity.actorName}</span>
+                          <span class={`rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.color}`}>
+                            {formatActionLabel(activity.action)}
+                          </span>
+                          {activity.type === 'revision' && activity.metadata?.status && activity.metadata.status !== 'pending' && (
+                            <span class={`rounded px-2 py-0.5 text-xs font-medium ${
+                              activity.metadata.status === 'approved' ? 'bg-[#e8f4e8] text-[#008000]' :
+                              activity.metadata.status === 'rejected' ? 'bg-[#fee] text-[#d33f3f]' :
+                              'bg-[#f8f9fa] text-[#54595d]'
+                            }`}>
+                              {activity.metadata.status}
+                            </span>
+                          )}
+                        </div>
+
+                        <p class="mt-1 text-sm text-[#54595d]">
+                          {activity.targetSlug ? (
+                            <a href={`/wiki/${activity.targetSlug}`} class="text-[#0645ad] hover:underline font-medium">
+                              {activity.targetName}
+                            </a>
+                          ) : (
+                            <span class="font-medium">{activity.targetName}</span>
+                          )}
+                          {activity.message && activity.message !== activity.targetName && (
+                            <span class="ml-1">- {activity.message}</span>
+                          )}
+                        </p>
+
+                        {/* Metadata badges */}
+                        {activity.metadata && (
+                          <div class="mt-2 flex flex-wrap gap-1.5">
+                            {activity.metadata.revisionNumber && (
+                              <span class="rounded bg-[#f8f9fa] px-2 py-0.5 text-xs text-[#72777d]">
+                                Rev #{activity.metadata.revisionNumber}
+                              </span>
+                            )}
+                            {activity.metadata.diffStats && (
+                              <span class="rounded bg-[#f8f9fa] px-2 py-0.5 text-xs text-[#72777d]">
+                                +{activity.metadata.diffStats.additions} / -{activity.metadata.diffStats.deletions}
+                              </span>
+                            )}
+                            {activity.metadata.category && (
+                              <span class="rounded bg-[#e8f0ff] px-2 py-0.5 text-xs text-[#3366cc]">
+                                {activity.metadata.category}
+                              </span>
+                            )}
+                            {activity.metadata.builtIn && (
+                              <span class="rounded bg-[#fef6e7] px-2 py-0.5 text-xs text-[#f4a500]">
+                                {activity.metadata.builtIn}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <!-- Timestamp & Actions -->
+                      <div class="flex-shrink-0 text-right">
+                        <p class="text-xs text-[#72777d]">{formatTimeAgo(activity.createdAt)}</p>
+                        <p class="text-xs text-[#a2a9b1] mt-0.5">
+                          {new Date(activity.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {activity.targetSlug && (
+                          <a
+                            href={`/wiki/${activity.targetSlug}`}
+                            class="mt-2 inline-block rounded border border-[#a2a9b1] bg-white px-2 py-1 text-xs font-medium text-[#0645ad] hover:bg-[#f8f9fa]"
+                          >
+                            View
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </section>
+    ) : (
+      <section class="rounded border border-[#c8ccd1] bg-[#f8f9fa] p-8 text-center">
+        <p class="text-lg text-[#54595d]">No activities found</p>
+        <p class="mt-2 text-sm text-[#72777d]">
+          {filterType !== 'all' ? 'Try selecting a different filter or view all activities.' : 'Activities will appear here as users interact with the platform.'}
+        </p>
+        {filterType !== 'all' && (
+          <a href="/admin/activities" class="mt-4 inline-block rounded bg-[#0645ad] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b0080]">
+            View All Activities
+          </a>
+        )}
+      </section>
+    )}
+
+    <!-- Load More (placeholder for future pagination) -->
+    {filteredActivities && filteredActivities.length >= 100 && (
+      <div class="text-center">
+        <p class="text-sm text-[#72777d]">Showing last 100 activities</p>
+      </div>
+    )}
+  </div>
+
+  <script>
+    document.getElementById('refresh-btn')?.addEventListener('click', () => {
+      window.location.reload();
+    });
+  </script>
+</AppLayout>

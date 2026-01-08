@@ -63,9 +63,14 @@ if (currentUser) {
             <a class="hover:text-[#0b0080]" href="/wiki">All pages</a>
         <a class="font-semibold text-[#ff6b35] hover:text-[#e55a2b]" href="/wiki/tanstack-start-hackathon">TanStack Start Hackathon</a>
         {isSuperAdmin && (
-          <a class="font-bold text-[#b32424] hover:text-[#721515]" href="/admin/editor">
-            Super Admin Editor
-          </a>
+          <>
+            <a class="font-bold text-[#b32424] hover:text-[#721515]" href="/admin">
+              Admin Dashboard
+            </a>
+            <a class="font-semibold text-[#b32424] hover:text-[#721515]" href="/admin/activities">
+              Recent Activities
+            </a>
+          </>
         )}
             <a class="hover:text-[#0b0080]" href="/vibecoded-apps">Vibecoded Apps</a>
             <a class="hover:text-[#0b0080]" href="/submit-app">Submit an APP</a>

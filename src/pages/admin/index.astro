@@ -58,6 +58,21 @@ const allPendingRevisions = await runConvexQuery<any[]>('pages:getAllPendingRevi
     <header class="border-b border-[#a2a9b1] pb-4">
       <h1 class="text-[2rem] font-normal text-[#202122]">Admin Dashboard</h1>
       <p class="text-sm text-[#54595d]">Manage pages, users, and system settings</p>
+      <!-- Admin Navigation -->
+      <nav class="mt-4 flex flex-wrap gap-2">
+        <a href="/admin" class="rounded bg-[#0645ad] px-3 py-1.5 text-xs font-semibold text-white">
+          Dashboard
+        </a>
+        <a href="/admin/activities" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          Recent Activities
+        </a>
+        <a href="/admin/content-manager" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          Content Manager
+        </a>
+        <a href="/admin/editor" class="rounded border border-[#a2a9b1] bg-white px-3 py-1.5 text-xs font-semibold text-[#202122] hover:bg-[#f8f9fa]">
+          Direct Editor
+        </a>
+      </nav>
     </header>
 
     <!-- Quick Actions -->

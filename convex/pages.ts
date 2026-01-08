@@ -832,6 +832,148 @@ export const addMissingStatusField = mutation({
 /**
  * Cleanup mutation to remove admin-related summary text from database
  */
+export const getRecentActivities = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: any, args: { limit?: number }) => {
+    const limit = args.limit ?? 50;
+
+    // Fetch moderation events (approvals, rejections, rollbacks)
+    const moderationEvents = await ctx.db
+      .query('moderationEvents')
+      .order('desc')
+      .take(limit);
+
+    // Fetch recent revisions (edit proposals)
+    const recentRevisions = await ctx.db
+      .query('pageRevisions')
+      .order('desc')
+      .take(limit);
+
+    // Fetch recent app submissions
+    const recentApps = await ctx.db
+      .query('apps')
+      .order('desc')
+      .take(limit);
+
+    // Fetch recent page creations
+    const recentPages = await ctx.db
+      .query('pages')
+      .order('desc')
+      .take(limit);
+
+    // Build a unified activity list
+    const activities: Array<{
+      type: string;
+      action: string;
+      actorId: string | null;
+      actorName: string;
+      targetName: string;
+      targetSlug: string | null;
+      message: string;
+      createdAt: number;
+      metadata: any;
+    }> = [];
+
+    // Process moderation events
+    for (const event of moderationEvents) {
+      const actor = await ctx.db.get(event.actorId);
+      const page = event.pageId ? await ctx.db.get(event.pageId) : null;
+
+      activities.push({
+        type: 'moderation',
+        action: event.action,
+        actorId: event.actorId,
+        actorName: actor?.displayName ?? actor?.email ?? 'Unknown',
+        targetName: page?.title ?? 'Unknown Page',
+        targetSlug: page?.slug ?? null,
+        message: event.message ?? `${event.action} revision`,
+        createdAt: event.createdAt,
+        metadata: event.metadata,
+      });
+    }
+
+    // Process revision submissions
+    for (const revision of recentRevisions) {
+      const author = await ctx.db.get(revision.createdBy);
+      const page = await ctx.db.get(revision.pageId);
+
+      if (!page) continue;
+
+      activities.push({
+        type: 'revision',
+        action: revision.status === 'pending' ? 'proposed_edit' : revision.status,
+        actorId: revision.createdBy,
+        actorName: author?.displayName ?? author?.email ?? 'Unknown',
+        targetName: page.title,
+        targetSlug: page.slug,
+        message: revision.summary ?? `Revision #${revision.revisionNumber}`,
+        createdAt: revision.createdAt,
+        metadata: {
+          revisionNumber: revision.revisionNumber,
+          status: revision.status,
+          diffStats: revision.diffStats,
+        },
+      });
+    }
+
+    // Process app submissions
+    for (const app of recentApps) {
+      const submitter = app.submittedBy ? await ctx.db.get(app.submittedBy) : null;
+
+      activities.push({
+        type: 'app',
+        action: app.status === 'pending' ? 'submitted_app' : `app_${app.status}`,
+        actorId: app.submittedBy ?? null,
+        actorName: submitter?.displayName ?? submitter?.email ?? 'Anonymous',
+        targetName: app.name,
+        targetSlug: null,
+        message: `${app.name} (${app.category}) - Built with ${app.builtIn}`,
+        createdAt: app.submittedAt,
+        metadata: {
+          category: app.category,
+          builtIn: app.builtIn,
+          status: app.status,
+        },
+      });
+    }
+
+    // Process page creations (only add if it's a new page, not just revision)
+    for (const page of recentPages) {
+      const creator = await ctx.db.get(page.createdBy);
+
+      // Check if this is a newly created page (created within last 24 hours of its timestamp)
+      const isNewPage = !activities.some(
+        a => a.type === 'revision' && a.targetSlug === page.slug &&
+        Math.abs(a.createdAt - page.createdAt) < 60000 // Within 1 minute
+      );
+
+      if (isNewPage) {
+        activities.push({
+          type: 'page',
+          action: 'created_page',
+          actorId: page.createdBy,
+          actorName: creator?.displayName ?? creator?.email ?? 'Unknown',
+          targetName: page.title,
+          targetSlug: page.slug,
+          message: `Created new page: ${page.title}`,
+          createdAt: page.createdAt,
+          metadata: {
+            status: page.status,
+            namespace: page.namespace,
+          },
+        });
+      }
+    }
+
+    // Sort by createdAt descending and limit
+    activities.sort((a, b) => b.createdAt - a.createdAt);
+
+    return activities.slice(0, limit);
+  },
+});
+
 export const cleanupAdminSummaries = mutation({
   args: {},
   handler: async (ctx: any) => {
