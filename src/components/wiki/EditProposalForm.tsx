@@ -23,11 +23,7 @@ type ProposalPayload = {
   proposals: Proposal[];
 };
 
-/**
- * EditProposalForm collects suggested improvements from contributors.
- * Submissions are stored in-memory for now and displayed beneath the form
- * to emulate a collaborative workflow until Convex persistence is added.
- */
+/** Collects persisted revision proposals from authenticated contributors. */
 function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole = 'reader' }: EditProposalFormProps) {
   const [contributor, setContributor] = useState('');
   const [summary, setSummary] = useState('');
@@ -46,11 +42,6 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
     setContributor('');
     setSummary('');
   }, [articleSlug]);
-
-  // Debug: Log authentication status
-  useEffect(() => {
-    console.log('[AUTH] isAuthenticated prop:', isAuthenticated);
-  }, [isAuthenticated]);
 
   // Fetch current page content to pre-fill the editor
   const { data: pageData, isLoading: isLoadingPageData, refetch: refetchPageContent } = useQuery({
@@ -78,6 +69,7 @@ function EditProposalFormContent({ articleSlug, isAuthenticated = true, userRole
       };
     },
     staleTime: 1000 * 30,
+    enabled: isAuthenticated,
     retry: (failureCount, error) => {
       // Don't retry if session is expired
       if (error.message === 'Session expired') return false;

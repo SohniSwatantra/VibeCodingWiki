@@ -1,6 +1,8 @@
 import type { Article } from '../types/wiki';
+import { vibecoding2026 } from './vibecoding-2026';
 
 export const articles: Article[] = [
+  vibecoding2026,
   {
     slug: 'origins-of-vibecoding',
     title: 'Origins of VibeCoding',
@@ -452,4 +454,3 @@ export function getRelatedArticles(slug: string) {
     .map((topicSlug) => getArticleBySlug(topicSlug))
     .filter(Boolean) as Article[];
 }
-

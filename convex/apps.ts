@@ -1,6 +1,7 @@
 import { query, mutation } from './kit';
 import { v } from 'convex/values';
 import { requireUser } from './auth';
+import { requireRole, ROLES } from './roles';
 import { now } from './utils';
 
 // List of supported vibecoding tools
@@ -45,7 +46,6 @@ export const submitApp = mutation({
     const userId = viewer._id;
     const nowTs = now();
 
-    // Auto-approve apps on submission - no moderation queue needed
     const appId = await ctx.db.insert('apps', {
       name: args.name,
       category: args.category,
@@ -55,9 +55,7 @@ export const submitApp = mutation({
       builtInOther: args.builtInOther,
       submittedBy: userId,
       submittedAt: nowTs,
-      status: 'approved',
-      approvedBy: userId,
-      approvedAt: nowTs,
+      status: 'pending',
     });
 
     return { appId };
@@ -74,21 +72,14 @@ export const listApps = query({
     const limit = args.limit ?? 100;
     let builder: any;
 
-    if (args.status && args.category) {
+    const publicStatus = 'approved';
+    if (args.category) {
       builder = ctx.db
         .query('apps')
-        .withIndex('by_status', (q: any) => q.eq('status', args.status))
+        .withIndex('by_status', (q: any) => q.eq('status', publicStatus))
         .filter((q: any) => q.eq(q.field('category'), args.category));
-    } else if (args.status) {
-      builder = ctx.db
-        .query('apps')
-        .withIndex('by_status', (q: any) => q.eq('status', args.status));
-    } else if (args.category) {
-      builder = ctx.db
-        .query('apps')
-        .withIndex('by_category', (q: any) => q.eq('category', args.category));
     } else {
-      builder = ctx.db.query('apps');
+      builder = ctx.db.query('apps').withIndex('by_status', (q: any) => q.eq('status', publicStatus));
     }
 
     return await builder.order('desc').take(limit);
@@ -98,14 +89,15 @@ export const listApps = query({
 export const getAppById = query({
   args: { appId: v.id('apps') },
   handler: async (ctx: any, args) => {
-    return await ctx.db.get(args.appId);
+    const app = await ctx.db.get(args.appId);
+    return app?.status === 'approved' ? app : null;
   },
 });
 
 export const approveApp = mutation({
   args: { appId: v.id('apps') },
   handler: async (ctx: any, args) => {
-    const viewer = await requireUser(ctx);
+    const { viewer } = await requireRole(ctx, [ROLES.moderator, ROLES.superAdmin]);
     const timestamp = now();
 
     await ctx.db.patch(args.appId, {
@@ -121,7 +113,7 @@ export const approveApp = mutation({
 export const rejectApp = mutation({
   args: { appId: v.id('apps') },
   handler: async (ctx: any, args) => {
-    await requireUser(ctx);
+    await requireRole(ctx, [ROLES.moderator, ROLES.superAdmin]);
 
     await ctx.db.patch(args.appId, {
       status: 'rejected',
@@ -144,7 +136,6 @@ export const submitAppPublic = mutation({
   handler: async (ctx: any, args) => {
     const nowTs = now();
 
-    // Auto-approve apps on submission - no moderation queue needed
     const appId = await ctx.db.insert('apps', {
       name: args.name,
       category: args.category,
@@ -153,8 +144,7 @@ export const submitAppPublic = mutation({
       builtIn: args.builtIn,
       builtInOther: args.builtInOther,
       submittedAt: nowTs,
-      status: 'approved',
-      approvedAt: nowTs,
+      status: 'pending',
     });
 
     return { appId };
@@ -169,6 +159,7 @@ export const listAppsByTool = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx: any, args) => {
+    await requireRole(ctx, [ROLES.moderator, ROLES.superAdmin]);
     const limit = args.limit ?? 100;
     const status = args.status ?? 'approved';
     let builder: any;
@@ -256,7 +247,7 @@ export const listAllAppsAdmin = query({
 export const deleteApp = mutation({
   args: { appId: v.id('apps') },
   handler: async (ctx: any, args) => {
-    // Note: Role check should be done at API layer
+    await requireRole(ctx, [ROLES.superAdmin]);
     const app = await ctx.db.get(args.appId);
     if (!app) {
       throw new Error('App not found');
@@ -272,6 +263,7 @@ export const deleteApp = mutation({
 export const approveAllPendingApps = mutation({
   args: {},
   handler: async (ctx: any) => {
+    const { viewer } = await requireRole(ctx, [ROLES.superAdmin]);
     const timestamp = now();
 
     const pendingApps = await ctx.db
@@ -283,6 +275,7 @@ export const approveAllPendingApps = mutation({
     for (const app of pendingApps) {
       await ctx.db.patch(app._id, {
         status: 'approved',
+        approvedBy: viewer._id,
         approvedAt: timestamp,
       });
       approved++;

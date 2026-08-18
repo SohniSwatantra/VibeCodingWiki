@@ -494,6 +494,7 @@ export const autoApproveFirstRevision = mutation({
     pageId: v.id('pages'),
   },
   handler: async (ctx: any, args: { pageId: string }) => {
+    const { viewer } = await requireRole(ctx, [ROLES.moderator, ROLES.superAdmin]);
     const page = await ctx.db.get(args.pageId);
     if (!page) {
       throw new Error('Page not found.');
@@ -521,6 +522,7 @@ export const autoApproveFirstRevision = mutation({
     // Mark revision as approved (system approval)
     await ctx.db.patch(firstRevision._id, {
       status: 'approved',
+      approvedBy: viewer._id,
       approvedAt: timestamp,
     });
 
@@ -581,6 +583,7 @@ export const adminUpdatePageContent = mutation({
       relatedTopics?: string[];
     },
   ) => {
+    const { viewer } = await requireRole(ctx, [ROLES.superAdmin]);
     const page = await ctx.db.get(args.pageId);
     if (!page) {
       throw new Error('Page not found.');
@@ -597,12 +600,6 @@ export const adminUpdatePageContent = mutation({
 
     const revisionNumber = latest ? latest.revisionNumber + 1 : 1;
 
-    // Create a system user ID (we'll use the first user in the database)
-    const systemUser = await ctx.db.query('users').first();
-    if (!systemUser) {
-      throw new Error('No users found in database. Cannot create revision.');
-    }
-
     // Create a new revision with the updated content
     const revisionId = await ctx.db.insert('pageRevisions', {
       pageId: args.pageId,
@@ -613,10 +610,10 @@ export const adminUpdatePageContent = mutation({
       tags: args.tags,
       timeline: args.timeline,
       relatedTopics: args.relatedTopics,
-      createdBy: systemUser._id,
+      createdBy: viewer._id,
       createdAt: timestamp,
       status: 'approved',
-      approvedBy: systemUser._id,
+      approvedBy: viewer._id,
       approvedAt: timestamp,
     });
 
@@ -1037,4 +1034,3 @@ export const cleanupAdminSummaries = mutation({
     };
   },
 });
-

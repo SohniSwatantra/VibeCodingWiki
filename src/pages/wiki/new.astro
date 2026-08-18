@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../layouts/AppLayout.astro';
 import { NewPageProposalForm } from '../../components/wiki/NewPageProposalForm.tsx';
+const isAuthenticated = Boolean(Astro.locals.user);
 ---
 
 <AppLayout title="Propose a new Vibecodingwiki page" description="Suggest new topics, share outlines, and help grow the community knowledge base.">
@@ -12,6 +13,5 @@ import { NewPageProposalForm } from '../../components/wiki/NewPageProposalForm.t
     </p>
   </section>
 
-  <NewPageProposalForm client:load />
+  <NewPageProposalForm client:load isAuthenticated={isAuthenticated} />
 </AppLayout>
-

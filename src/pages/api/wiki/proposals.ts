@@ -28,6 +28,7 @@ export const OPTIONS: APIRoute = async () => {
 };
 
 export const GET: APIRoute = async ({ url, locals }) => {
+  if (!locals.user) return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
   const slug = url.searchParams.get('slug');
   if (!slug) {
     return new Response(JSON.stringify({ message: 'Missing slug parameter' }), {
@@ -117,27 +118,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, url }) => {
-  // Immediate log to confirm route handler is called - use both console.log and console.error
   const handlerStart = Date.now();
-  console.error('\n🚨🚨🚨 POST HANDLER CALLED 🚨🚨🚨');
-  console.error(`Time: ${new Date().toISOString()}`);
-  console.error(`URL: ${url.toString()}`);
-  console.error(`Method: ${request.method}`);
-  console.log(`\n========== PROPOSAL SUBMISSION STARTED ==========`);
-  console.log(`[${new Date().toISOString()}] Timestamp: ${handlerStart}`);
-  console.log(`Request URL: ${url.toString()}`);
-  console.log(`Request method: ${request.method}`);
-  
-  // Try to log headers safely
-  try {
-    const headers: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      headers[key] = value;
-    });
-    console.log(`Request headers:`, headers);
-  } catch (e) {
-    console.log(`Could not log headers:`, e);
-  }
+  if (!locals.user) return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
   
   // Check if Convex is configured
   const convexUrl = import.meta.env.CONVEX_URL?.trim();

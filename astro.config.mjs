@@ -7,11 +7,11 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 // Enable Netlify adapter only in production to avoid POST request blocking bug in dev mode
 // Netlify automatically sets NETLIFY=true during builds
-const isProduction = process.env.NETLIFY === 'true';
+const isBuild = process.env.NETLIFY === 'true' || process.argv.includes('build');
 
 export default defineConfig({
   output: 'server',
-  adapter: isProduction ? netlify({
+  adapter: isBuild ? netlify({
     edgeMiddleware: false, // Disable edge middleware to avoid potential issues
   }) : undefined,
   integrations: [react()],

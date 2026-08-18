@@ -34,7 +34,13 @@ function extractEntries(data: any) {
   });
 }
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
+  if (!locals.user) return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
+  const user = await getConvexUserByWorkOSId(locals.user.id);
+  const roles = user?.roles?.map((assignment) => assignment.role) ?? [];
+  if (!roles.some((role) => role === 'moderator' || role === 'super_admin')) {
+    return new Response(JSON.stringify({ message: 'Moderator access required.' }), { status: 403 });
+  }
   const slug = url.searchParams.get('slug');
   if (!slug) {
     return new Response(JSON.stringify({ message: 'Missing slug parameter' }), { status: 400 });
@@ -64,6 +70,7 @@ export const GET: APIRoute = async ({ url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, url }) => {
+  if (!locals.user) return new Response(JSON.stringify({ message: 'Authentication required.' }), { status: 401 });
   try {
     const body = await request.json();
     const action: string | undefined = body?.action;
