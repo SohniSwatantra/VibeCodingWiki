@@ -17,6 +17,11 @@ if (Astro.locals.user) {
 
 const structuredSections = [
   {
+    title: 'News',
+    description: 'Verified VibeCoding product releases, acquisitions, Product Hunt launches, security developments, and fast-moving community projects.',
+    href: '/news',
+  },
+  {
     title: 'Origins',
     description: 'Andrej Karpathy\'s February 2025 introduction of "vibe coding" as LLM-driven development through natural language ("see stuff, say stuff, run stuff"), rapid adoption (25% of Y Combinator Winter 2025 batch with 95% AI-generated code), and subsequent critiques from Gary Marcus and Simon Willison warning of accountability and security risks.',
     href: '/wiki/origins-of-vibecoding',
@@ -82,6 +87,7 @@ const featuredArticles = featuredCollection.slice(0, 3);
       <h3 class="text-lg font-semibold text-[#202122]">Quick links</h3>
       <ul class="space-y-2 text-sm text-[#202122]">
         <li><a href="/recent" class="text-[#0645ad] hover:text-[#0b0080]">Recent changes</a></li>
+        <li><a href="/news" class="text-[#0645ad] hover:text-[#0b0080]">VibeCoding news</a></li>
         <li><a href="/coming-soon" class="text-[#0645ad] hover:text-[#0b0080]">Policies &amp; guidelines</a></li>
         <li><a href="/wiki/new" class="text-[#0645ad] hover:text-[#0b0080]">Propose a new page</a></li>
         <li><a href="/roadmap" class="text-[#0645ad] hover:text-[#0b0080]">Roadmap</a></li>

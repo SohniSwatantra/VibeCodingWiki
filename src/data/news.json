@@ -1,0 +1,106 @@
+[
+  {
+    "id": "can-i-vibecode-it-viral-launch-2026-08",
+    "title": "Can I Vibecode It? turns SaaS replacement into a viral public catalogue",
+    "summary": "The open-source project grades whether coding agents can recreate paid SaaS products and publishes the prompts and trade-offs. Its creator reported 60,000 page views from 15,000 visitors in its first 72 hours; on 19 August, the site listed 1,093 apps while GitHub showed 247 stars, 173 forks and an active contribution queue.",
+    "category": "Community",
+    "publishedAt": "2026-08-19",
+    "verifiedAt": "2026-08-19",
+    "sources": [
+      { "name": "Can I Vibecode It?", "url": "https://canivibecodeit.com/", "kind": "primary" },
+      { "name": "GitHub repository", "url": "https://github.com/canivibecodeit/canivibecodeit", "kind": "primary" },
+      { "name": "Creator profile", "url": "https://x.com/robj3d3", "kind": "creator" }
+    ],
+    "tags": ["open source", "virality", "SaaS"]
+  },
+  {
+    "id": "cursor-google-workspace-plugins-2026-08-03",
+    "title": "Cursor connects coding agents to Google Workspace",
+    "summary": "Cursor released plugins for Gmail, Google Drive and Google Calendar, allowing its agents to retrieve workspace context and carry out supported mail, file and scheduling actions.",
+    "category": "Tools",
+    "publishedAt": "2026-08-03",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Cursor changelog", "url": "https://cursor.com/changelog/google-workspace-plugins", "kind": "primary" }],
+    "tags": ["Cursor", "plugins", "agents"]
+  },
+  {
+    "id": "bolt-security-audit-on-publish-2026-07-30",
+    "title": "Bolt adds a security audit before publishing",
+    "summary": "Bolt introduced a publish-time review that searches generated applications for security problems and can propose hardening changes before release.",
+    "category": "Security",
+    "publishedAt": "2026-07-30",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Bolt announcement", "url": "https://bolt.new/blog/security-audit-on-publish", "kind": "primary" }],
+    "tags": ["Bolt", "security", "deployment"]
+  },
+  {
+    "id": "bolt-skills-2026-07-22",
+    "title": "Bolt launches reusable Skills",
+    "summary": "Bolt Skills package reusable context, rules and actions at project or workspace scope, giving teams a durable way to guide repeated agent work.",
+    "category": "Tools",
+    "publishedAt": "2026-07-22",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Bolt announcement", "url": "https://bolt.new/blog/introducing-bolt-new-skills", "kind": "primary" }],
+    "tags": ["Bolt", "skills", "workflows"]
+  },
+  {
+    "id": "figma-acquires-bud-orchids-team-2026-07-07",
+    "title": "Figma acquires the team behind Bud, formerly Orchids",
+    "summary": "Figma acquired the team behind the vibe-coding and agent platform Bud, previously called Orchids. The service announced a shutdown while the team moved to Figma.",
+    "category": "Acquisitions",
+    "publishedAt": "2026-07-07",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "TechCrunch report", "url": "https://techcrunch.com/2026/07/07/figma-acquires-team-behind-a-vibe-coding-app/", "kind": "reporting" }],
+    "tags": ["Figma", "Bud", "Orchids"]
+  },
+  {
+    "id": "claude-sonnet-5-2026-06-30",
+    "title": "Anthropic releases Claude Sonnet 5 for coding and agents",
+    "summary": "Anthropic released Sonnet 5 across Claude plans, Claude Code and its API, positioning it as a more capable agentic Sonnet for planning, tool use and coding.",
+    "category": "Tools",
+    "publishedAt": "2026-06-30",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Anthropic announcement", "url": "https://www.anthropic.com/news/claude-sonnet-5", "kind": "primary" }],
+    "tags": ["Claude Code", "Anthropic", "models"]
+  },
+  {
+    "id": "base44-base-1-model-2026-06-29",
+    "title": "Base44 starts rolling out its own app-building model",
+    "summary": "Wix announced Base 1, a proprietary model specialized for Base44's natural-language application-building workflow, one year after Base44 joined Wix.",
+    "category": "Tools",
+    "publishedAt": "2026-06-29",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Wix founder announcement", "url": "https://www.wix.com/blog/avishai-abrahami-we-built-our-own-ai-models", "kind": "primary" }],
+    "tags": ["Base44", "Wix", "models"]
+  },
+  {
+    "id": "crewdle-ai-product-hunt-2026-06-24",
+    "title": "Crewdle AI finishes third on Product Hunt",
+    "summary": "Crewdle AI launched as a combined chat, agent, automation, content and website-building platform and ranked number three for the day on Product Hunt.",
+    "category": "Product Hunt",
+    "publishedAt": "2026-06-24",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Crewdle on Product Hunt", "url": "https://www.producthunt.com/products/crewdle", "kind": "platform" }],
+    "tags": ["Crewdle", "launch", "agents"]
+  },
+  {
+    "id": "skybridge-product-hunt-2026-06-22",
+    "title": "Skybridge ranks second on Product Hunt launch day",
+    "summary": "The open-source React framework for MCP apps ranked number two for the day and number five for the week, reflecting growing interest in interactive applications that run inside AI assistants.",
+    "category": "Product Hunt",
+    "publishedAt": "2026-06-22",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Skybridge on Product Hunt", "url": "https://www.producthunt.com/products/skybridge", "kind": "platform" }],
+    "tags": ["Skybridge", "MCP", "React"]
+  },
+  {
+    "id": "google-ai-studio-full-stack-vibe-coding-2026-03-18",
+    "title": "Google AI Studio expands into full-stack vibe coding",
+    "summary": "Google upgraded AI Studio with its Antigravity coding agent and Firebase integrations for building applications with databases, multiplayer features and connections to external services.",
+    "category": "Tools",
+    "publishedAt": "2026-03-18",
+    "verifiedAt": "2026-08-19",
+    "sources": [{ "name": "Google announcement", "url": "https://blog.google/innovation-and-ai/technology/developers-tools/full-stack-vibe-coding-google-ai-studio/", "kind": "primary" }],
+    "tags": ["Google AI Studio", "Firebase", "full stack"]
+  }
+]
