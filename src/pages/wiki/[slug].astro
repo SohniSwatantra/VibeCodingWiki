@@ -9,6 +9,7 @@ import { EditProposalForm } from '../../components/wiki/EditProposalForm.tsx';
 import { ModerationPanel } from '../../components/wiki/ModerationPanel.tsx';
 import { runConvexQuery } from '../../lib/convex.server';
 import { filterAdminSummary } from '../../lib/utils/filterAdminSummary';
+import { renderInlineContent } from '../../lib/markdown/renderInlineContent';
 
 export async function getStaticPaths() {
   const { articles } = await fetchDirectory();
@@ -92,7 +93,7 @@ const filteredSummary = filterAdminSummary(articleData.summary, isSuperAdmin);
           <section id={id} class="space-y-3">
             <h2 class="border-b border-[#a2a9b1] pb-1 text-xl font-normal text-[#202122]">{heading}</h2>
             {paragraphs.length > 0 ? (
-              paragraphs.map((para) => <p class="text-sm leading-6 text-[#202122]">{para}</p>)
+              paragraphs.map((para) => <p class="text-sm leading-6 text-[#202122]" set:html={renderInlineContent(para)} />)
             ) : (
               <p class="text-sm leading-6 text-[#202122]">(Content coming soon)</p>
             )}

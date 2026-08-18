@@ -33,6 +33,7 @@ if (!existing?.page) {
   run('pages:approveRevision', { revisionId: created.revisionId }, true);
   console.log(`Published ${vibecoding2026.slug}.`);
 } else {
-  run('pages:adminUpdatePageContent', { ...payload, pageId: existing.page._id }, true);
+  const { title: _title, slug: _slug, namespace: _namespace, ...update } = payload;
+  run('pages:adminUpdatePageContent', { ...update, pageId: existing.page._id }, true);
   console.log(`Updated ${vibecoding2026.slug}.`);
 }
