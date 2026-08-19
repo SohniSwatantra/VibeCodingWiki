@@ -292,5 +292,38 @@ export default defineSchema({
     createdBy: v.optional(v.id('users')),
   })
     .index('by_displayOrder', ['displayOrder']),
-});
 
+  news: defineTable({
+    storyId: v.string(),
+    title: v.string(),
+    summary: v.string(),
+    category: v.union(
+      v.literal('Tools'),
+      v.literal('Funding'),
+      v.literal('Acquisitions'),
+      v.literal('Product Hunt'),
+      v.literal('Community'),
+      v.literal('Security'),
+    ),
+    publishedAt: v.string(),
+    verifiedAt: v.string(),
+    sources: v.array(
+      v.object({
+        name: v.string(),
+        url: v.string(),
+        kind: v.union(
+          v.literal('primary'),
+          v.literal('platform'),
+          v.literal('creator'),
+          v.literal('reporting'),
+        ),
+      }),
+    ),
+    tags: v.array(v.string()),
+    origin: v.union(v.literal('seed'), v.literal('automation')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_storyId', ['storyId'])
+    .index('by_publishedAt', ['publishedAt']),
+});

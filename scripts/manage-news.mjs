@@ -4,9 +4,10 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const categories = new Set(['Tools', 'Acquisitions', 'Product Hunt', 'Community', 'Security']);
+const categories = new Set(['Tools', 'Funding', 'Acquisitions', 'Product Hunt', 'Community', 'Security']);
 const sourceKinds = new Set(['primary', 'platform', 'creator', 'reporting']);
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const markupPattern = /<[a-z!/][^>]*>|!?\[[^\]]+\]\([^)]+\)/i;
 const defaultDataPath = fileURLToPath(new URL('../src/data/news.json', import.meta.url));
 
 function fail(message) {
@@ -37,6 +38,9 @@ function validateItem(item, index) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id || '')) fail(`${label}: id must use lowercase kebab-case`);
   if (typeof item.title !== 'string' || item.title.trim().length < 12) fail(`${label}: title is missing or too short`);
   if (typeof item.summary !== 'string' || item.summary.trim().length < 50) fail(`${label}: summary is missing or too short`);
+  if (markupPattern.test(`${item.title} ${item.summary}`)) {
+    fail(`${label}: title and summary must be plain text; put links in sources`);
+  }
   if (!categories.has(item.category)) fail(`${label}: unsupported category ${JSON.stringify(item.category)}`);
   validateDate(item.publishedAt, 'publishedAt', label);
   validateDate(item.verifiedAt, 'verifiedAt', label);
@@ -47,6 +51,7 @@ function validateItem(item, index) {
   item.sources.forEach((source, sourceIndex) => {
     const sourceLabel = `${label}: source ${sourceIndex + 1}`;
     if (typeof source?.name !== 'string' || !source.name.trim()) fail(`${sourceLabel} needs a name`);
+    if (markupPattern.test(source.name)) fail(`${sourceLabel} name must be plain text`);
     if (!sourceKinds.has(source?.kind)) fail(`${sourceLabel} has an unsupported kind`);
     try {
       const url = new URL(source.url);
@@ -60,6 +65,7 @@ function validateItem(item, index) {
   if (!Array.isArray(item.tags) || item.tags.length === 0 || item.tags.some((tag) => typeof tag !== 'string' || !tag.trim())) {
     fail(`${label}: tags must contain at least one non-empty string`);
   }
+  if (item.tags.some((tag) => markupPattern.test(tag))) fail(`${label}: tags must be plain text`);
 }
 
 function validateCollection(items) {

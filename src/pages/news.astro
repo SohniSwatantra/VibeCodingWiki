@@ -1,18 +1,21 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro';
 import newsData from '../data/news.json';
+import { runConvexQuery } from '../lib/convex.server';
 import type { NewsItem } from '../types/news';
 
-const news = (newsData as NewsItem[]).toSorted((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+const fallbackNews = newsData as NewsItem[];
+const liveNews = await runConvexQuery<NewsItem[]>('news:listNews', { limit: 100 });
+const news = (liveNews?.length ? liveNews : fallbackNews).toSorted((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 const categories = [...new Set(news.map((item) => item.category))];
 const lastVerified = news.reduce((latest, item) => item.verifiedAt > latest ? item.verifiedAt : latest, '');
 ---
 
-<AppLayout title="VibeCoding News" description="Verified launches, acquisitions, tools, security updates, and community stories from the VibeCoding ecosystem.">
+<AppLayout title="VibeCoding News" description="Verified launches, funding, acquisitions, tools, security updates, and community stories from the VibeCoding ecosystem.">
   <section class="rounded border border-[#a2a9b1] bg-[#f8f9fa] p-5 shadow-sm">
     <h2 class="text-[1.75rem] font-normal text-[#202122]">Latest coverage</h2>
     <p class="mt-2 text-sm text-[#54595d]">
-      A source-linked record of notable product releases, acquisitions, launches, security developments, and community projects.
+      A source-linked record of notable product releases, funding, acquisitions, launches, security developments, and community projects.
       Stories are checked daily; updates are published only when the evidence is specific and dated.
     </p>
     <p class="mt-2 text-xs text-[#72777d]">Last verified {new Date(`${lastVerified}T00:00:00Z`).toLocaleDateString('en-GB', { dateStyle: 'long', timeZone: 'UTC' })}</p>

@@ -14,7 +14,8 @@
     "approve:revisions": "tsx scripts/approve-first-revisions.ts",
     "publish:current-content": "tsx scripts/publish-current-content.ts",
     "news:validate": "node scripts/manage-news.mjs validate",
-    "news:add": "node scripts/manage-news.mjs add"
+    "news:add": "node scripts/manage-news.mjs add",
+    "news:seed:convex": "node scripts/seed-news-to-convex.mjs"
   },
   "dependencies": {
     "@astrojs/netlify": "^6.6.5",
