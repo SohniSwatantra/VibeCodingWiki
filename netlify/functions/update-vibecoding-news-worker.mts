@@ -122,7 +122,7 @@ function validateCandidate(value: any, today: string, cutoff: string): NewsItem 
     return null;
   }
 
-  const sources = value.sources.map((source: any) => ({
+  const sources: NewsItem['sources'] = value.sources.map((source: any) => ({
     name: cleanPlainText(source.name),
     url: source.url.trim(),
     kind: source.kind,
@@ -153,7 +153,7 @@ export default async (request: Request) => {
   const convexUrl = requiredEnv('CONVEX_URL');
   const convexAdminKey = requiredEnv('CONVEX_ADMIN_KEY');
   const client = new ConvexHttpClient(convexUrl);
-  client.setAdminAuth(convexAdminKey);
+  (client as any).setAdminAuth(convexAdminKey);
 
   const existing = await (client as any).query('news:listNews', { limit: 200 }) as NewsItem[];
   const now = new Date();
