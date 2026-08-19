@@ -160,6 +160,7 @@ export default async (request: Request) => {
   const today = now.toISOString().slice(0, 10);
   const cutoff = sixMonthsBefore(now);
   const latestVerified = existing.reduce((latest, item) => item.verifiedAt > latest ? item.verifiedAt : latest, cutoff);
+  const sweepStart = latestVerified > cutoff ? latestVerified : cutoff;
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -193,7 +194,7 @@ export default async (request: Request) => {
           role: 'user',
           content: [{
             type: 'input_text',
-            text: `Today is ${today}. Find at most five material VibeCoding ecosystem developments published from ${cutoff} through today, prioritizing events after the last sweep on ${latestVerified}. Cover shipped coding or app-building tools, funding, acquisitions, Product Hunt launches, security changes, and unusually notable community projects. Every central claim needs a direct canonical HTTPS source. Attribute company- or creator-reported metrics and platform rankings. Exclude rumors, tutorials, opinion posts, generic roundups, undated pages, and duplicates. Existing stories are: ${JSON.stringify(existing.map((item) => ({ id: item.id, title: item.title, publishedAt: item.publishedAt, sourceUrls: item.sources.map((source) => source.url) })))}. Use lowercase kebab-case IDs and neutral concise prose.`,
+            text: `Today is ${today}. Find at most five material VibeCoding ecosystem developments published from ${sweepStart} through today. Do not backfill stories published before ${sweepStart}; this is a daily incremental sweep, while the archive already covers the rolling six-month window beginning ${cutoff}. Cover shipped coding or app-building tools, funding, acquisitions, Product Hunt launches, security changes, and unusually notable community projects. Every central claim needs a direct canonical HTTPS source. Attribute company- or creator-reported metrics and platform rankings. Exclude rumors, tutorials, opinion posts, generic roundups, undated pages, and duplicates. Existing stories are: ${JSON.stringify(existing.map((item) => ({ id: item.id, title: item.title, publishedAt: item.publishedAt, sourceUrls: item.sources.map((source) => source.url) })))}. Use lowercase kebab-case IDs and neutral concise prose.`,
           }],
         },
       ],
