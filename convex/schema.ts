@@ -50,7 +50,9 @@ export default defineSchema({
   })
     .index('by_slug', ['slug'])
     .index('by_namespace', ['namespace'])
-    .index('by_status', ['status']),
+    .index('by_status', ['status'])
+    .searchIndex('by_title', { searchField: 'title' })
+    .searchIndex('by_summary', { searchField: 'summary' }),
 
   pageRevisions: defineTable({
     pageId: v.id('pages'),
